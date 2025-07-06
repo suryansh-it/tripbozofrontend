@@ -182,13 +182,13 @@ axios.defaults.headers.common["Authorization"] =
           </button>
         </form>
 {/* ── OR Separator ── */}
-       <div className="my-6 flex items-center">
+       {/* <div className="my-6 flex items-center">
          <hr className="flex-grow border-gray-300" />
          <span className="px-2 text-gray-500">or</span>
          <hr className="flex-grow border-gray-300" />
-       </div>
+       </div> */}
         {/* Google OAuth Button (smaller, classy) */}
-       <GoogleLoginBtn
+       {/* <GoogleLoginBtn
          className="
            w-full
            px-4 py-2
@@ -202,7 +202,7 @@ axios.defaults.headers.common["Authorization"] =
            hover:bg-gray-50
            transition
          "
-       />
+       /> */}
 
         {/* Redirect to Register Link - now full width with centered text */}
         <button
