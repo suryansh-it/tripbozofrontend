@@ -1,4 +1,4 @@
-import { redis } from "./redisClient";
+import { redis } from "./redisClient.js";
 
 export async function withRedisCache(key, ttlSeconds, fetchFn, fallbackData) {
   try {

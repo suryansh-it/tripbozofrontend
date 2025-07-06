@@ -292,6 +292,30 @@ export default function RegisterPage() {
           </button>
         </form>
 
+ {/* ── OR Separator ── */}
+       <div className="my-6 flex items-center">
+         <hr className="flex-grow border-gray-300" />
+         <span className="px-2 text-gray-500">or</span>
+         <hr className="flex-grow border-gray-300" />
+       </div>
+
+       {/* Google OAuth Button */}
+       <GoogleLoginBtn
+                className="
+                  w-full
+                  px-4 py-2
+                  rounded-lg
+                  bg-white
+                  border border-gray-200
+                  text-gray-700 text-sm
+                  font-medium
+                  flex items-center justify-center space-x-2
+                  shadow-sm
+                  hover:bg-gray-50
+                  transition
+                "
+              />
+
         <button
           className="mt-4 w-full text-center text-sm text-teal-600 hover:underline"
           onClick={() => router.push("/login")}

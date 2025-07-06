@@ -184,7 +184,7 @@ export async function downloadAppList(sessionId) {
     try {
     // Create a promise that rejects after 5 seconds
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timed out')), 5000);
+      setTimeout(() => reject(new Error('Request timed out')), 10000);
     });
 
     // Race the actual request against the timeout
