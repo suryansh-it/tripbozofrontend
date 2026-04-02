@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import PopularDestinations from '/components/homepage/PopularDestinations';
-import HeroSection from '/components/homepage/HeroSection';
-import HowItWorks from '/components/homepage/HowItWorks';
-import CallToAction from '/components/homepage/CallToAction';
-import SEO from '/components/SEO';
+import PopularDestinations from './PopularDestinations';
+import HeroSection from './HeroSection';
+import HowItWorks from './HowItWorks';
+import CallToAction from './CallToAction';
+import SEO from '../SEO';
 
 const HomePage = () => {
   // Homepage specific schema data
