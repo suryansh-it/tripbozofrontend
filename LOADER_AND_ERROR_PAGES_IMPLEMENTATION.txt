@@ -1,0 +1,178 @@
+# Next.js Loader Animation & Error Pages Implementation Guide
+
+## Loader Animation (Custom Loader Bar)
+
+### Overview
+A creative loader animation (custom loader bar) is implemented to appear during all route transitions and navigation actions in the app. The loader is globally visible for all navigation, including tab clicks, navbar, footer links, buttons, and programmatic navigation.
+
+### Key Files & Code
+
+#### 1. Loader Bar Component
+- **File:** `components/LoadingBar.js` & `components/LoadingBar.css`
+- **Purpose:** Renders the animated loader bar. Controlled by a `show` prop.
+- **Usage:**
+  ```js
+  <LoadingBar show={show} />
+  ```
+
+#### 2. Loader Context
+- **File:** `components/LoaderContext.js`
+- **Purpose:** Provides global state (`show`, `setShow`) for loader visibility using React Context.
+- **Usage:**
+  ```js
+  export function LoaderProvider({ children }) {
+    const [show, setShow] = useState(false);
+    return (
+      <LoaderContext.Provider value={{ show, setShow }}>
+        {children}
+      </LoaderContext.Provider>
+    );
+  }
+  export function useLoader() { return useContext(LoaderContext); }
+  ```
+
+#### 3. Loader Route Listener
+- **File:** `components/LoaderRouteListener.js`
+- **Purpose:** Listens for route changes using `usePathname` and hides the loader (`setShow(false)`) when navigation completes.
+- **Usage:**
+  ```js
+  useEffect(() => { setShow(false); }, [pathname]);
+  ```
+
+#### 4. AppLink Component
+- **File:** `components/AppLink.js`
+- **Purpose:** Custom link component that triggers the loader on navigation. Prevents loader if navigating to the current route.
+- **Usage:**
+  ```js
+  const pathname = usePathname();
+  const isSameRoute = pathname === href;
+  <Link
+    href={href}
+    onClick={e => { if (!isSameRoute) setShow(true); }}
+  >{children}</Link>
+  ```
+
+#### 5. Layout Integration
+- **File:** `src/app/layout.js`
+- **Purpose:** Wraps the app in `LoaderProvider`, renders `LoaderRouteListener`, and uses `LoaderConsumerContent` to show the loader bar globally.
+- **Usage:**
+  ```js
+  <LoaderProvider>
+    <LoaderRouteListener />
+    <LoaderConsumerContent>
+      <Navbar />
+      ...
+    </LoaderConsumerContent>
+  </LoaderProvider>
+  ```
+
+#### 6. Navigation Integration
+- **Files:**
+  - `components/Navbar.js` & `components/Footer.js`: All navigation links use `AppLink`.
+  - **Other navigation buttons** (e.g., in onboarding, call-to-action, popular destinations, app category list):
+    - Use `useLoader` and call `setShow(true)` before navigation (e.g., before `router.push` or `window.location.href`).
+    - Example:
+      ```js
+      const { setShow } = useLoader();
+      const handleClick = () => { setShow(true); router.push('/target'); };
+      ```
+
+#### 7. Example Button Integration
+- **PopularDestinations.js**:
+  ```js
+  <button onClick={() => { setShow(true); window.location.href = '/country/TH'; }}>Explore Apps</button>
+  ```
+- **CallToAction.js**:
+  ```js
+  <button onClick={handleGetStarted}>Get Started</button>
+  // handleGetStarted: setShow(true); router.push('/Onboarding');
+  ```
+- **CountryAppsPage.js**:
+  ```js
+  <button onClick={handleGenerateQR}>Generate QR Code</button>
+  // handleGenerateQR: setShow(true); router.push(...)
+  <button onClick={() => { setShow(true); router.push(...); }}>Essentials</button>
+  ```
+- **Onboardingcomponent.js**:
+  ```js
+  <button onClick={handleViewApps}>View Apps</button>
+  // handleViewApps: setShow(true); router.push(...)
+  ```
+- **About/page.js**:
+  ```js
+  <button onClick={() => { setShow(true); router.push('/Onboarding'); }}>Start Now</button>
+  ```
+
+### Best Practices
+- Always use `AppLink` for internal navigation links.
+- For navigation via buttons or programmatic navigation, call `setShow(true)` before navigation.
+- Loader is automatically hidden after route change by `LoaderRouteListener`.
+- Prevent loader from showing if navigating to the current route (see `AppLink.js`).
+
+---
+
+## Error Pages (404, 500, Offline)
+
+### Overview
+Custom error pages are implemented for 404 (not found), 500 (server error), and offline (no internet) scenarios. These pages are visually attractive and provide helpful messages and actions.
+
+### Key Files & Code
+
+#### 1. Error Page Component
+- **File:** `components/ErrorPage.js`
+- **Purpose:** Renders a styled error page based on `statusCode` or `errorType` props.
+- **Usage:**
+  ```js
+  <ErrorPage statusCode={404} />
+  <ErrorPage errorType="offline" />
+  <ErrorPage statusCode={500} />
+  ```
+- **Features:**
+  - Shows different illustrations and messages for 404, 500, and offline.
+  - Includes a "Go Home" or "Retry" button and a support email link.
+
+#### 2. Not Found Page
+- **File:** `src/app/not-found.js`
+- **Purpose:** Next.js 404 handler. Renders `ErrorPage` with `statusCode={404}`.
+- **Usage:**
+  ```js
+  export default function NotFound() { return <ErrorPage statusCode={404} />; }
+  ```
+
+#### 3. Global Error Page
+- **File:** `src/app/global-error.js`
+- **Purpose:** Next.js global error handler. Detects offline state and renders the appropriate error page.
+- **Usage:**
+  ```js
+  export default function GlobalError({ error, reset }) {
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+    if (isOffline) return <ErrorPage errorType="offline" />;
+    return <ErrorPage statusCode={500} />;
+  }
+  ```
+
+### How to Test
+- **404:** Visit a non-existent route (e.g., `/random-page`).
+- **500:** Throw an error in a page/component.
+- **Offline:** Use browser DevTools to go offline and reload/navigate.
+
+---
+
+## Summary Table
+| Feature         | File(s) Involved                                 | Key Code/Usage                                      |
+|-----------------|--------------------------------------------------|-----------------------------------------------------|
+| Loader Bar      | LoadingBar.js, LoaderContext.js, LoaderRouteListener.js, AppLink.js, layout.js, Navbar.js, Footer.js, Onboardingcomponent.js, CallToAction.js, PopularDestinations.js, CountryAppsPage.js, About/page.js | See above for code snippets and integration points |
+| Error Pages     | ErrorPage.js, not-found.js, global-error.js      | See above for code snippets and integration points   |
+
+---
+
+## Copying to Other Projects
+- Copy all the above files and code snippets.
+- Wrap your app in `LoaderProvider` and use `LoaderRouteListener` and `LoaderConsumerContent` in your layout.
+- Use `AppLink` for all internal navigation, and call `setShow(true)` for programmatic navigation.
+- Add `ErrorPage.js`, `not-found.js`, and `global-error.js` for error handling.
+- Update illustrations and styles as needed for your brand.
+
+---
+
+This file documents all details, code, and integration points for loader animation and error pages in your Next.js app. Paste this into your new project and Copilot will understand how to implement or extend these features.

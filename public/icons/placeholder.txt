@@ -1,0 +1,10 @@
+This is a placeholder file to ensure the icons directory exists.
+
+You should replace this with actual icon files:
+- android-chrome-192x192.png
+- android-chrome-512x512.png
+- apple-touch-icon.png
+- favicon-32x32.png
+- favicon-16x16.png
+
+See the README.md file in this directory for more information. 

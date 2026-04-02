@@ -1,0 +1,97 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+:root {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Smooth scrolling */
+html, body, .homepage-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
+
+/* Animation utilities */
+.animate-fade-in-up { animation: fadeInUp 0.7s both; }
+.animate-fade-in { animation: fadeIn 1s both; }
+.animate-slide-in-left { animation: slideInLeft 0.7s both; }
+.animate-bounce-slow { animation: bounceSlow 2.5s infinite alternate; }
+
+/* Staggered animation utility */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeInUp 0.7s both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.7s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.8s; }
+.stagger-children > *:nth-child(9) { animation-delay: 0.9s; }
+.stagger-children > *:nth-child(10) { animation-delay: 1s; }
+
+/* Card and button hover transitions */
+.card-hover {
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.card-hover:hover {
+  box-shadow: 0 8px 32px 0 rgba(44, 185, 176, 0.18), 0 1.5px 6px 0 rgba(0,0,0,0.08);
+  transform: translateY(-6px) scale(1.03);
+}
+.btn-animated {
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.2s;
+}
+.btn-animated:hover {
+  background: linear-gradient(90deg, #38bdf8 0%, #2ad2c9 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px 0 rgba(44, 185, 176, 0.18);
+  transform: scale(1.05);
+}
+
+/*
+@tailwind utilities;
+@tailwind base; */
+
+

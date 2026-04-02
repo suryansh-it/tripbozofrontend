@@ -1,0 +1,11 @@
+# Allow all web crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://tripbozo.com/sitemap.xml
+
+# Disallow sensitive or administrative areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/ 
