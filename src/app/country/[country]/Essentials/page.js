@@ -5,6 +5,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetchEssentials, fetchCountryInfo } from "@/src/utils/api";
 import { useLoader } from "@/components/LoaderContext";
+import ScrollNavButtons from "@/components/ScrollNavButtons";
+import { FaDownload, FaStop, FaVolumeUp } from "react-icons/fa";
 
 export default function EssentialsPage() {
   const { country } = useParams();
@@ -372,9 +374,11 @@ const sampleEsim = [
             </h3>
             <button
               onClick={() => downloadSection("insurance")}
-              className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-200 transition"
+              title="Download insurance list"
+              aria-label="Download insurance list"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-200"
             >
-              Download
+              <FaDownload className="text-sm" />
             </button>
           </div>
           <p className="text-gray-700 text-sm mb-4">
@@ -412,9 +416,11 @@ const sampleEsim = [
             </h3>
             <button
               onClick={() => downloadSection("esim")}
-              className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-semibold hover:bg-green-200 transition"
+              title="Download eSIM list"
+              aria-label="Download eSIM list"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-700 transition hover:bg-green-200"
             >
-              Download
+              <FaDownload className="text-sm" />
             </button>
           </div>
           <p className="text-gray-700 text-sm mb-4">
@@ -473,9 +479,11 @@ const sampleEsim = [
             </h2>
             <button
               onClick={() => downloadSection("emergencies")}
-              className="px-3 py-1.5 bg-teal-100 text-teal-700 rounded-lg text-sm font-semibold hover:bg-teal-200 transition"
+              title="Download emergency contacts"
+              aria-label="Download emergency contacts"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100 text-teal-700 transition hover:bg-teal-200"
             >
-              Download
+              <FaDownload className="text-sm" />
             </button>
           </div>
           <ul className="grid md:grid-cols-2 gap-4">
@@ -507,9 +515,11 @@ const sampleEsim = [
             </h2>
             <button
               onClick={() => downloadSection("phrases")}
-              className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition"
+              title="Download local phrases"
+              aria-label="Download local phrases"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 transition hover:bg-blue-200"
             >
-              Download
+              <FaDownload className="text-sm" />
             </button>
           </div>
           <ul className="space-y-4">
@@ -529,9 +539,11 @@ const sampleEsim = [
                   </div>
                   <button
                     onClick={() => speakPhrase(p, `${country}-${i}`)}
-                    className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                    title={speakingKey === `${country}-${i}` ? "Stop pronunciation" : "Hear pronunciation"}
+                    aria-label={speakingKey === `${country}-${i}` ? "Stop pronunciation" : "Hear pronunciation"}
+                    className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 transition hover:bg-blue-200"
                   >
-                    {speakingKey === `${country}-${i}` ? "Stop" : "Hear"}
+                    {speakingKey === `${country}-${i}` ? <FaStop className="text-sm" /> : <FaVolumeUp className="text-sm" />}
                   </button>
                 </div>
                 {p.context_note && (
@@ -555,9 +567,11 @@ const sampleEsim = [
             </h2>
             <button
               onClick={() => downloadSection("tips")}
-              className="px-3 py-1.5 bg-yellow-200 text-yellow-800 rounded-lg text-sm font-semibold hover:bg-yellow-300 transition"
+              title="Download useful tips"
+              aria-label="Download useful tips"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-200 text-yellow-800 transition hover:bg-yellow-300"
             >
-              Download
+              <FaDownload className="text-sm" />
             </button>
           </div>
           <ul className="list-disc list-inside space-y-2 text-gray-800">
@@ -570,6 +584,7 @@ const sampleEsim = [
           </ul>
         </section>
       </div>
+      <ScrollNavButtons />
     </div>
   );
 }

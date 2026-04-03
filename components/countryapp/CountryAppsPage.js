@@ -14,6 +14,7 @@ import {
   FaCaretDown, // Added for dropdown icon
 } from "react-icons/fa";
 import { initSession, saveSelectedApps } from "@/src/utils/api";
+import ScrollNavButtons from "@/components/ScrollNavButtons";
 
 
 
@@ -501,6 +502,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
         </div>
         </div>
       </div>
+      <ScrollNavButtons />
     </main>
   );
 }
