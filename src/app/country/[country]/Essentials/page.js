@@ -51,6 +51,13 @@ export default function EssentialsPage() {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      // Revoke cached blob URLs when leaving the page.
+      for (const url of translateCacheRef.current.values()) {
+        if (typeof url === "string" && url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      }
+      translateCacheRef.current.clear();
     };
   }, []);
 
@@ -138,11 +145,13 @@ const sampleEsim = [
 
   const looksMojibake = (text) => /[ÃÂâåðœ¤¦]/.test(text || "");
 
-  const extractSpeakableText = (phrase) => {
+  const extractSpeakableText = (phrase, targetLang) => {
     const original = (phrase?.original || "").trim();
     const translation = (phrase?.translation || "").trim();
     const ttsText = (phrase?.tts_text || "").trim();
     const source = ttsText || translation || original;
+    const targetBase = baseLang(targetLang);
+    const targetIsEnglish = targetBase === "en";
 
     if (!source) return "";
 
@@ -151,32 +160,22 @@ const sampleEsim = [
       const outside = (paren[1] || "").trim();
       const inside = (paren[2] || "").trim();
 
-      // Prefer the native script only if it doesn't look corrupted.
-      if (inside && !looksMojibake(inside)) {
-        return inside;
-      }
-      if (outside) {
-        return outside;
+      // Resolve "native (english gloss)" or "english (native)" consistently.
+      if (!targetIsEnglish) {
+        if (outside && !looksMojibake(outside) && !looksEnglish(outside)) return outside;
+        if (inside && !looksMojibake(inside) && !looksEnglish(inside)) return inside;
+        if (outside && !looksMojibake(outside)) return outside;
+        if (inside && !looksMojibake(inside)) return inside;
+      } else {
+        if (outside && !looksMojibake(outside) && looksEnglish(outside)) return outside;
+        if (inside && !looksMojibake(inside) && looksEnglish(inside)) return inside;
+        if (outside && !looksMojibake(outside)) return outside;
+        if (inside && !looksMojibake(inside)) return inside;
       }
     }
 
     return source.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
   };
-
-  const NON_ROMAN_LANGS = new Set([
-    "ja",    // Japanese
-    "th",    // Thai
-    "zh",    // Chinese
-    "ko",    // Korean
-    "hi",    // Hindi
-    "ar",    // Arabic (all variants: AE, EG, MA, SA)
-    "el",    // Greek
-    "vi",    // Vietnamese
-    "tr",    // Turkish
-    "he",    // Hebrew
-    "ru",    // Russian
-    "uk",    // Ukrainian
-  ]);
 
   const synthesizeViaProxy = async ({ text, targetLang, autoTranslate }) => {
     const clean = (text || "").trim();
@@ -264,9 +263,6 @@ const sampleEsim = [
       audioRef.current.currentTime = 0;
       audioRef.current.onended = null;
       audioRef.current.onerror = null;
-      if (audioRef.current.src?.startsWith("blob:")) {
-        URL.revokeObjectURL(audioRef.current.src);
-      }
     }
   };
 
@@ -290,23 +286,22 @@ const sampleEsim = [
     if (speakingKey === key) {
       stopAnySpeech();
       setSpeakingKey(null);
-      return;
     }
 
     stopAnySpeech();
     const lang = phrase?.tts_lang || getSpeechLang(country);
-    let textToSpeak = extractSpeakableText(phrase);
+    let textToSpeak = extractSpeakableText(phrase, lang);
     if (!textToSpeak) return;
 
     const originalText = (phrase?.original || "").trim();
     const likelyEnglishInput = looksEnglish(originalText);
     const targetBase = baseLang(lang);
     const targetIsNonEnglish = targetBase !== "en";
-    const isNonRomanTarget = NON_ROMAN_LANGS.has(targetBase);
+    const textLooksEnglish = looksEnglish(textToSpeak);
 
-    // For non-roman languages, send clean English source to server-side translate+tts.
+    // Always auto-translate to target language when target is non-English and source text is English.
     const sourceForProxy = targetIsNonEnglish && likelyEnglishInput ? originalText : textToSpeak;
-    const autoTranslate = targetIsNonEnglish && likelyEnglishInput;
+    const autoTranslate = targetIsNonEnglish && (likelyEnglishInput || textLooksEnglish);
 
     try {
       if (!audioRef.current) {
@@ -316,15 +311,22 @@ const sampleEsim = [
       const proxyUrl = await synthesizeViaProxy({
         text: sourceForProxy,
         targetLang: lang,
-        autoTranslate: isNonRomanTarget ? autoTranslate : false,
+        autoTranslate,
       });
-      audio.src = proxyUrl;
+      // Allow repeat playback with cached blob URLs.
+      if (audio.src !== proxyUrl) {
+        audio.src = proxyUrl;
+      } else {
+        audio.currentTime = 0;
+      }
       audio.onended = () => setSpeakingKey(null);
       audio.onerror = () => {
         setSpeakingKey(null);
         speakWithBrowserTTS(textToSpeak, lang, key);
       };
       setSpeakingKey(key);
+      audio.pause();
+      audio.currentTime = 0;
       await audio.play();
     } catch {
       speakWithBrowserTTS(textToSpeak, lang, key);
