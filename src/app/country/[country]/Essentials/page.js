@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { fetchEssentials, fetchCountryInfo } from "@/src/utils/api";
 import { useLoader } from "@/components/LoaderContext";
@@ -17,9 +18,81 @@ export default function EssentialsPage() {
   const [data, setData] = useState({ emergencies: [], phrases: [], tips: [] });
   const [loading, setLoading] = useState(true);
   const [speakingKey, setSpeakingKey] = useState(null);
+  const [originCountry, setOriginCountry] = useState(null);
   const [voices, setVoices] = useState([]);
   const audioRef = useRef(null);
   const translateCacheRef = useRef(new Map());
+
+  const ORIGIN_ASSISTANCE = {
+    US: {
+      label: "U.S. Department of State",
+      emergencyPhone: "+1-888-407-4747",
+      emergencyPhoneIntl: "+1-202-501-4444",
+      consularAddress: "2201 C St NW, Washington, DC 20520, USA",
+      website: "https://travel.state.gov/content/travel/en/international-travel/emergencies.html",
+      missionFinder: "https://www.usembassy.gov/",
+    },
+    IN: {
+      label: "India Ministry of External Affairs",
+      emergencyPhone: "+91-11-23012113",
+      consularAddress: "South Block, Raisina Hill, New Delhi 110011, India",
+      website: "https://www.mea.gov.in/consular-services.htm",
+      missionFinder: "https://www.mea.gov.in/indian-missions-abroad-new.htm",
+    },
+    GB: {
+      label: "UK Foreign, Commonwealth & Development Office",
+      emergencyPhone: "+44-20-7008-5000",
+      consularAddress: "King Charles St, London SW1A 2AH, United Kingdom",
+      website: "https://www.gov.uk/guidance/get-help-if-youre-abroad",
+      missionFinder: "https://www.gov.uk/world/embassies",
+    },
+    AU: {
+      label: "Australian Consular Services",
+      emergencyPhone: "+61-2-6261-3305",
+      consularAddress: "R.G. Casey Building, John McEwen Cres, Barton ACT 0221, Australia",
+      website: "https://www.smartraveller.gov.au/consular-services",
+      missionFinder: "https://www.smartraveller.gov.au/consular-services/where-get-consular-assistance",
+    },
+    CA: {
+      label: "Global Affairs Canada",
+      emergencyPhone: "+1-613-996-8885",
+      consularAddress: "125 Sussex Dr, Ottawa, ON K1A 0G2, Canada",
+      website: "https://travel.gc.ca/assistance/emergency-assistance",
+      missionFinder: "https://travel.gc.ca/assistance/embassies-consulates",
+    },
+  };
+
+  const COUNTRY_NAME_BY_CODE = {
+    AE: "United Arab Emirates",
+    AT: "Austria",
+    AU: "Australia",
+    BR: "Brazil",
+    CA: "Canada",
+    CH: "Switzerland",
+    CN: "China",
+    DE: "Germany",
+    EG: "Egypt",
+    ES: "Spain",
+    FR: "France",
+    GB: "United Kingdom",
+    GR: "Greece",
+    HR: "Croatia",
+    ID: "Indonesia",
+    IN: "India",
+    IT: "Italy",
+    JP: "Japan",
+    KR: "South Korea",
+    MA: "Morocco",
+    MX: "Mexico",
+    MY: "Malaysia",
+    NL: "Netherlands",
+    PT: "Portugal",
+    SA: "Saudi Arabia",
+    TH: "Thailand",
+    TR: "Turkey",
+    US: "United States",
+    VN: "Vietnam",
+  };
 
   // Only get the pretty name once
   useEffect(() => {
@@ -43,6 +116,27 @@ export default function EssentialsPage() {
       })
       .finally(() => setLoading(false));
   }, [country]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tripbozo_origin_country");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.code) {
+        const code = String(parsed.code).toUpperCase();
+        const name = parsed.name || COUNTRY_NAME_BY_CODE[code] || code;
+        setOriginCountry({ code, name });
+      }
+    } catch {
+      const rawCode = localStorage.getItem("tripbozo_origin_country");
+      if (rawCode && /^[A-Za-z]{2}$/.test(rawCode)) {
+        const code = rawCode.toUpperCase();
+        setOriginCountry({ code, name: COUNTRY_NAME_BY_CODE[code] || code });
+      } else {
+        setOriginCountry(null);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -80,6 +174,29 @@ export default function EssentialsPage() {
   }, []);
 
   const { emergencies, phrases, tips } = data;
+  const destinationEmbassyContact = emergencies.find((entry) =>
+    /(embassy|consulate|foreign|diplomatic)/i.test(entry?.name || "")
+  );
+  const emergencyGuidelines = [
+    "Call local emergency services first if there is immediate danger.",
+    "Contact your embassy/consulate and request consular support.",
+    "Keep passport copy, visa, and insurance details ready.",
+    "Share your location and emergency contact with a trusted person.",
+  ];
+
+  const originAssistance = React.useMemo(() => {
+    if (!originCountry?.code) return null;
+    const exact = ORIGIN_ASSISTANCE[originCountry.code];
+    if (exact) return exact;
+
+    return {
+      label: `${originCountry.name} Foreign Affairs Support`,
+      emergencyPhone: "Use your official foreign affairs portal",
+      consularAddress: "Official central office address not listed in Tripbozo yet.",
+      website: "",
+      missionFinder: "",
+    };
+  }, [originCountry, countryName, country]);
 
 // Sample fallbacks
 const sampleInsurance = [
@@ -226,6 +343,35 @@ const sampleEsim = [
   const downloadSection = (sectionName) => {
     const cc = country?.toUpperCase() || "COUNTRY";
     const base = `${cc}-essentials`;
+
+    if (sectionName === "assistance") {
+      if (!originCountry?.code || !originAssistance) {
+        return downloadTextFile(
+          `${base}-country-assistance.txt`,
+          "No personalized country assistance available yet. Set your origin country in onboarding."
+        );
+      }
+
+      const lines = [
+        `Origin Country: ${originCountry.name} (${originCountry.code})`,
+        `Destination: ${countryName || cc}`,
+        `Agency: ${originAssistance.label}`,
+        `24/7 Emergency: ${originAssistance.emergencyPhone}`,
+        ...(originAssistance.emergencyPhoneIntl ? [`International Emergency: ${originAssistance.emergencyPhoneIntl}`] : []),
+        `Consular Address: ${originAssistance.consularAddress || "Not listed"}`,
+        ...(originAssistance.website ? [`Emergency Help: ${originAssistance.website}`] : []),
+        ...(originAssistance.missionFinder ? [`Embassy/Consulate Finder: ${originAssistance.missionFinder}`] : []),
+        ...(destinationEmbassyContact
+          ? [`Destination Embassy/Consular Desk (${destinationEmbassyContact.name}): ${destinationEmbassyContact.phone}`]
+          : ["Destination Embassy/Consular Desk: Not listed"]),
+        "",
+        "Emergency Guidelines:",
+        ...emergencyGuidelines.map((g, i) => `${i + 1}. ${g}`),
+      ];
+
+      return downloadTextFile(`${base}-country-assistance.txt`, lines.join("\n"));
+    }
+
     if (sectionName === "emergencies") {
       const lines = emergencies.length
         ? emergencies.map((e) => `${e.name}: ${e.phone}${e.email ? ` | ${e.email}` : ""}`)
@@ -455,6 +601,114 @@ const sampleEsim = [
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-12 space-y-12">
+
+        <section className="bg-indigo-50 p-6 sm:p-8 rounded-3xl shadow-md border-l-8 border-indigo-400 animate-fade-in-up">
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <h2 className="text-xl sm:text-2xl font-bold text-indigo-900">Your Country Assistance</h2>
+            <div className="flex items-center gap-2">
+              {originCountry?.code && (
+                <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+                  Origin: {originCountry.code}
+                </span>
+              )}
+              <button
+                onClick={() => downloadSection("assistance")}
+                title="Download country assistance"
+                aria-label="Download country assistance"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 transition hover:bg-indigo-200"
+              >
+                <FaDownload className="text-sm" />
+              </button>
+            </div>
+          </div>
+
+          {originCountry ? (
+            <div className="space-y-3 text-sm sm:text-base text-indigo-950">
+              <p>
+                Traveling from <strong>{originCountry.name}</strong> to <strong>{countryName}</strong>. Contact your consular support team:
+              </p>
+              <p>
+                <span className="font-semibold">Agency:</span> {originAssistance.label}
+              </p>
+              <p>
+                <span className="font-semibold">24/7 Emergency:</span>{" "}
+                {originAssistance.emergencyPhone.startsWith("+") ? (
+                  <a href={`tel:${originAssistance.emergencyPhone}`} className="underline font-semibold hover:text-indigo-700">
+                    {originAssistance.emergencyPhone}
+                  </a>
+                ) : (
+                  <span>
+                    {originAssistance.emergencyPhone}
+                  </span>
+                )}
+              </p>
+              {originAssistance.emergencyPhoneIntl && (
+                <p>
+                  <span className="font-semibold">International Emergency:</span>{" "}
+                  <a href={`tel:${originAssistance.emergencyPhoneIntl}`} className="underline font-semibold hover:text-indigo-700">
+                    {originAssistance.emergencyPhoneIntl}
+                  </a>
+                </p>
+              )}
+              {originAssistance.consularAddress && (
+                <p>
+                  <span className="font-semibold">Consular Office Address:</span> {originAssistance.consularAddress}
+                </p>
+              )}
+              <p>
+                <span className="font-semibold">Destination Embassy/Consular Desk:</span>{" "}
+                {destinationEmbassyContact ? (
+                  <a href={`tel:${destinationEmbassyContact.phone}`} className="underline font-semibold hover:text-indigo-700">
+                    {destinationEmbassyContact.name}: {destinationEmbassyContact.phone}
+                  </a>
+                ) : (
+                  <span>Not listed</span>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-3 pt-1">
+                {originAssistance.website && (
+                  <a
+                    href={originAssistance.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-white font-semibold hover:bg-indigo-700 transition"
+                  >
+                    Emergency Help Guide
+                  </a>
+                )}
+                {originAssistance.missionFinder && (
+                  <a
+                    href={originAssistance.missionFinder}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-white border border-indigo-200 px-4 py-2 text-indigo-800 font-semibold hover:bg-indigo-100 transition"
+                  >
+                    Official Mission Directory
+                  </a>
+                )}
+              </div>
+
+              <div className="rounded-xl bg-white/70 border border-indigo-200 p-4 mt-2">
+                <h3 className="text-sm sm:text-base font-bold text-indigo-900 mb-2">Emergency Guidelines</h3>
+                <ul className="space-y-1 text-sm text-indigo-950">
+                  {emergencyGuidelines.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="font-bold text-indigo-700">{idx + 1}.</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2 text-sm sm:text-base text-indigo-950">
+              <p>Add your origin country to get personalized embassy and consular support details.</p>
+              <Link href="/Onboarding" className="inline-block rounded-lg bg-indigo-600 px-4 py-2 text-white font-semibold hover:bg-indigo-700 transition">
+                Set Origin Country
+              </Link>
+            </div>
+          )}
+        </section>
 
  {/* Brown Divider - Added before Emergency Contacts */}
  <div className="h-px bg-gradient-to-r from-amber-800 via-amber-600 to-amber-700 opacity-40" />
