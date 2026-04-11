@@ -94,6 +94,49 @@ export default function EssentialsPage() {
     VN: "Vietnam",
   };
 
+  const COUNTRY_UTILITY = {
+    FR: {
+      transit: "Use RATP for Paris metro and buses; SNCF for intercity trains. Ride-share is useful late at night.",
+      payments: "Cards and contactless are common, but carry some cash for small shops and kiosks.",
+      connectivity: "Strong coverage in cities; eSIM and prepaid SIM are easy to buy.",
+      safety: "Watch pickpockets in crowded tourist zones and on metro lines.",
+      scams: "Avoid petition scams and unofficial taxi drivers near landmarks.",
+      emergency: "Police 17, Ambulance 15, EU emergency 112.",
+    },
+    US: {
+      transit: "Ride-share is common in cities; public transit quality varies by city.",
+      payments: "Card-first economy. Keep a backup card and expect tipping in service contexts.",
+      connectivity: "Strong carrier coverage in cities, patchy in remote routes.",
+      safety: "Use official ride apps and avoid isolated areas at night.",
+      scams: "Watch for fake charity pitches and transport overcharging.",
+      emergency: "Call 911 for police, fire, or medical emergencies.",
+    },
+    IN: {
+      transit: "Use metro where available; for short trips use app-based cabs or negotiated auto-rickshaws.",
+      payments: "UPI is widely used; carry cash for local markets and small vendors.",
+      connectivity: "Affordable mobile data and easy prepaid SIM options.",
+      safety: "Stay alert in crowded places and prefer verified transport at night.",
+      scams: "Confirm fares before travel and avoid unsolicited guide offers.",
+      emergency: "Police 100, Ambulance 102, national emergency 112.",
+    },
+    GB: {
+      transit: "Contactless works across much of London transport; rail is reliable for intercity.",
+      payments: "Card and contactless are standard; cash use is limited in many areas.",
+      connectivity: "Good urban coverage and easy tourist SIM/eSIM options.",
+      safety: "Generally safe, but protect valuables on crowded trains and streets.",
+      scams: "Use licensed taxis and avoid street gambling setups.",
+      emergency: "Emergency numbers: 999 or 112.",
+    },
+    AU: {
+      transit: "Cities have strong public transport; for long routes domestic flights are practical.",
+      payments: "Contactless card payments are near-universal.",
+      connectivity: "Great in cities; weaker in remote areas.",
+      safety: "Follow beach safety flags and local weather warnings.",
+      scams: "Book tours through verified operators only.",
+      emergency: "Emergency number 000 (or 112 from mobile).",
+    },
+  };
+
   // Only get the pretty name once
   useEffect(() => {
     fetchCountryInfo(country.toUpperCase())
@@ -174,6 +217,15 @@ export default function EssentialsPage() {
   }, []);
 
   const { emergencies, phrases, tips } = data;
+  const destinationCode = country?.toUpperCase();
+  const utility = COUNTRY_UTILITY[destinationCode] || {
+    transit: "Check official local transit apps for routes and ticketing.",
+    payments: "Cards are widely accepted; keep some local cash as backup.",
+    connectivity: "Get a local SIM/eSIM at airport or main telecom stores.",
+    safety: "Follow local advisories and keep emergency contacts ready.",
+    scams: "Use official transport and avoid unsolicited offers.",
+    emergency: "Know local emergency numbers before you travel.",
+  };
   const destinationEmbassyContact = emergencies.find((entry) =>
     /(embassy|consulate|foreign|diplomatic)/i.test(entry?.name || "")
   );
@@ -387,7 +439,18 @@ const sampleEsim = [
     }
 
     if (sectionName === "tips") {
-      const lines = tips.length ? tips.map((t) => `- ${t.tip}`) : ["No useful tips available."];
+      const lines = [
+        "Country Utility Snapshot:",
+        `- Transit basics: ${utility.transit}`,
+        `- Payment tips: ${utility.payments}`,
+        `- Connectivity reality: ${utility.connectivity}`,
+        `- Safety notes: ${utility.safety}`,
+        `- Common scams to avoid: ${utility.scams}`,
+        `- Emergency workflow: ${utility.emergency}`,
+        "",
+        "Additional Tips:",
+        ...(tips.length ? tips.map((t) => `- ${t.tip}`) : ["- No useful tips available."]),
+      ];
       return downloadTextFile(`${base}-useful-tips.txt`, lines.join("\n"));
     }
 
@@ -827,6 +890,32 @@ const sampleEsim = [
             >
               <FaDownload className="text-sm" />
             </button>
+          </div>
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl bg-white border border-yellow-200 p-3">
+              <p className="font-semibold text-yellow-800">Transit basics</p>
+              <p className="text-gray-700 mt-1">{utility.transit}</p>
+            </div>
+            <div className="rounded-xl bg-white border border-yellow-200 p-3">
+              <p className="font-semibold text-yellow-800">Payment tips</p>
+              <p className="text-gray-700 mt-1">{utility.payments}</p>
+            </div>
+            <div className="rounded-xl bg-white border border-yellow-200 p-3">
+              <p className="font-semibold text-yellow-800">Connectivity reality</p>
+              <p className="text-gray-700 mt-1">{utility.connectivity}</p>
+            </div>
+            <div className="rounded-xl bg-white border border-yellow-200 p-3">
+              <p className="font-semibold text-yellow-800">Safety notes</p>
+              <p className="text-gray-700 mt-1">{utility.safety}</p>
+            </div>
+            <div className="rounded-xl bg-white border border-yellow-200 p-3">
+              <p className="font-semibold text-yellow-800">Common scams to avoid</p>
+              <p className="text-gray-700 mt-1">{utility.scams}</p>
+            </div>
+            <div className="rounded-xl bg-white border border-yellow-200 p-3">
+              <p className="font-semibold text-yellow-800">Emergency workflow</p>
+              <p className="text-gray-700 mt-1">{utility.emergency}</p>
+            </div>
           </div>
           <ul className="list-disc list-inside space-y-2 text-gray-800">
             {tips.map((t, i) => (

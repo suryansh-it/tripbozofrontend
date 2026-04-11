@@ -1,5 +1,5 @@
-"use client";
 
+"use client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useLoader } from "@/components/LoaderContext";
@@ -27,6 +27,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
   const router = useRouter();
   const { setShow } = useLoader();
   const storageKey = `selectedAppIds_${countryCode}`;
+  const ratingStorageKey = `appRatings_${countryCode}`;
   const [selectedApps, setSelectedApps] = useState(() => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -38,6 +39,19 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(selectedApps));
   }, [selectedApps, storageKey]);
+
+  const [userRatings, setUserRatings] = useState(() => {
+    try {
+      const raw = localStorage.getItem(ratingStorageKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(ratingStorageKey, JSON.stringify(userRatings));
+  }, [ratingStorageKey, userRatings]);
 
   const clearAll = () => {
     setSelectedApps([]);
@@ -53,6 +67,8 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [filterType, setFilterType] = useState("ALL");
   const [isFilterOpen, setIsFilterOpen] = useState(false); // State for filter dropdown
+  const [currentPage, setCurrentPage] = useState(1);
+  const APPS_PER_PAGE = 8;
 
    // 1) Dynamically derive the list of categories from your apps:
    const categories = useMemo(() => {
@@ -124,6 +140,14 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
       return 0;
     });
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, activeCategory, filterType]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredApps.length / APPS_PER_PAGE));
+  const pageStart = (currentPage - 1) * APPS_PER_PAGE;
+  const paginatedApps = filteredApps.slice(pageStart, pageStart + APPS_PER_PAGE);
+
 
  
    const upperCountryCode = countryCode.toUpperCase();
@@ -135,8 +159,11 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
 
     // track which app card is expanded
   const [expandedId, setExpandedId] = useState(null);
-  const toggleExpand = (id) =>
+  const [ratingPickerFor, setRatingPickerFor] = useState(null);
+  const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
+    setRatingPickerFor(null);
+  };
 
 
   const trackAppStoreClick =
@@ -170,6 +197,33 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
         alert("App details copied to clipboard!");
       });
     }
+  };
+
+  const getAppDetails = (app) => {
+    const bestFor = app.best_for || `Travelers in ${countryInfo.name} needing ${String(app.category || "essential").toLowerCase()} support.`;
+    const why = app.why_recommended || app.description || "Popular among travelers for reliability and ease of use.";
+    const caution = app.caution_note || "Check pricing, region availability, and account requirements before your trip.";
+    return { bestFor, why, caution };
+  };
+
+  const getCategoryAlternatives = (app) => {
+    const targetCategory = app.category || "Uncategorized";
+    return apps
+      .filter((candidate) => candidate.id !== app.id && (candidate.category || "Uncategorized") === targetCategory)
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 3);
+  };
+
+  const handleSetRating = (appId, value) => {
+    setUserRatings((prev) => ({ ...prev, [appId]: value }));
+  };
+
+  const handleClearRating = (appId) => {
+    setUserRatings((prev) => {
+      const next = { ...prev };
+      delete next[appId];
+      return next;
+    });
   };
 
 
@@ -296,175 +350,356 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
       </div>
       <br />
 
+      {/* Selection Methodology */}
+      <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-6 md:px-14 mb-8">
+        <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-5 sm:p-6 shadow-sm">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md flex-shrink-0">
+              <span className="text-2xl">🎯</span>
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-indigo-950">How these apps are selected</h3>
+              <p className="mt-1 text-sm sm:text-base text-indigo-800 leading-relaxed">
+                We highlight apps that are useful in {countryInfo.name}, rated well by travelers, actively maintained, privacy-conscious, and relevant to the travel problems people actually face.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs sm:text-sm font-semibold">
+                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">4.0+ rating</span>
+                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">Recent updates</span>
+                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">Local relevance</span>
+                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">Privacy aware</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main content with apps grid and sidebar */}
       <div className="w-full max-w-[1920px] mx-auto flex flex-col lg:flex-row gap-8 px-2 sm:px-6 md:px-14 pb-16">
         {/* Left: Apps Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 items-start">
-        {filteredApps.map((app) => (
+        <div className="flex-1">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 items-start">
+        {paginatedApps.map((app) => (
             <div
               key={app.id}
-              // stop the outside click handler, then toggle only this one
               onClick={(e) => { e.stopPropagation(); toggleExpand(app.id); }}
               className="
              relative
              w-full
              h-auto
              bg-white
-             border border-gray-300
-             rounded-2xl
-             p-6
-             shadow-sm
-             hover:shadow-md
-             transition
+             border border-gray-200
+             rounded-3xl
+             p-5 sm:p-6
+             shadow-md
+             hover:shadow-xl
+             hover:border-cyan-200
+             transition-all duration-300
              cursor-pointer
              flex flex-col
+             overflow-hidden
            "
          >
+              {/* Gradient top accent */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2ad2c9] via-cyan-400 to-transparent"></div>
+
               {/* Content */}
               <div className="flex-1 flex flex-col gap-4">
-                {/* Header row: name sponsored + select */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {/* Icon */}
-                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gray-100 border border-[#e0e0e0] flex-shrink-0 overflow-hidden">
+                {/* Header: icon, title, and quick actions */}
+                <div className="flex items-start justify-between gap-3 sm:gap-4">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100 flex-shrink-0 overflow-hidden shadow-sm">
                       <NextImage
                         src={app.icon_url || "/file.svg"}
                         alt={app.name || "App icon"}
                         fill
-                        sizes="(max-width: 640px) 48px, 64px"
-                        className="object-cover"
+                        sizes="(max-width: 640px) 64px, 80px"
+                        className="object-cover p-2"
                       />
                     </div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#222] truncate">
-                      {app.name}
-                    </h2>
-                    {app.is_sponsored && (
-                      <span className="px-2 py-0.5 rounded-full bg-[#fff6d6] text-[#e6b800] text-xs font-semibold whitespace-nowrap">
-                        Sponsored
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    // stop expansion toggle when clicking “+”
-                   onClick={(e) => { e.stopPropagation(); toggleSelect(app.id); }}
-                    className={`w-6 h-6 md:w-10 md:h-10 flex items-center justify-center rounded-full border-2 transition-all ${
-                      selectedApps.includes(app.id)
-                        ? "bg-[#e6fcf7] border-[#2ad2c9] text-[#2ad2c9]"
-                        : app.is_sponsored
-                        ? "bg-[#fffbe6] border-[#ffe9b3] text-[#e6b800]"
-                        : "bg-white border-[#e0e0e0] text-[#2ad2c9]"
-                    }
-                    text-sm md:text-base  // Adjust icon size responsively`}
-                  >
-                    {selectedApps.includes(app.id) ? <FaCheck /> : <FaPlus />}
-                  </button>
-                
-                </div>
-
-                {/* Description row (2 lines max) */}
-                <p
-                  className="text-gray-700 text-xs sm:text-sm mb-3"
-                  style={{
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}
-                >
-                  {app.description || "No description available."}
-                </p>
-
-                {/* Bottom row: rating on left; category + platforms grouped bottom‑right */}
-                <div className="mt-auto pt-1 flex items-start justify-between w-full flex-wrap gap-2">
-                  {/* Rating & Price */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#f7b500] text-base sm:text-lg">★</span>
-                    <span className="font-semibold text-gray-800 text-sm sm:text-base">
-                      {app.rating || "4.5"}
-                    </span>
-                    <span
-                      className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        app.price ? "bg-gray-200 text-gray-800" : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {app.price ? "Paid" : "Free"}
-                    </span>
-                  </div>
-                  {/* Category  Platforms */}
-                  <div className="flex items-center gap-2">
-                    {/* Category pill */}
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                      {app.category || "Uncategorized"}
-                    </span>
-                    {/* Platform pills */}
-                {/* Android pill */}
-                {app.android_link && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 whitespace-nowrap">
-                      Android
-                    </span>
-                  )}
-                  {app.ios_link && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-800 whitespace-nowrap">
-                      iOS
-                    </span>
-                  )}
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center justify-end text-xs font-semibold text-gray-500">
-                  <span className="mr-1">{expandedId === app.id ? "Hide store links" : "Tap to view store links"}</span>
-                  {expandedId === app.id ? <FaChevronUp /> : <FaChevronDown />}
-                </div>
-
-                {/* Expandable "card footer" */}
-                {expandedId === app.id && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="border-t border-gray-200 pt-4 flex items-center justify-between gap-3"
-                  >
-                    {/* Store links on left */}
-                    <div className="flex items-center gap-2">
-                      {app.android_link && (
-                        <a
-                          href={app.android_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-teal-300 border border-teal-400 text-gray-800 shadow-sm hover:bg-teal-400 transition"
-                          aria-label="Open Play Store"
-                          title="Open Play Store"
-                          onClick={trackAppStoreClick("play_store", app.packageName || app.id)}
-                        >
-                          <FaGooglePlay className="text-sm" />
-                        </a>
-                      )}
-                      {app.ios_link && (
-                        <a
-                          href={app.ios_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gray-700 border border-gray-700 text-white shadow-sm hover:bg-gray-800 transition"
-                          aria-label="Open App Store"
-                          title="Open App Store"
-                          onClick={trackAppStoreClick("app_store", app.packageName || app.id)}
-                        >
-                          <FaApple className="text-sm" />
-                        </a>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex items-start gap-2 flex-wrap">
+                        <h2 className="text-lg sm:text-xl font-bold text-[#0a0a0a] leading-tight min-w-0 flex-1">
+                          {app.name}
+                        </h2>
+                      </div>
+                      <p className="mt-1 text-xs sm:text-sm text-gray-500 leading-snug">
+                        {getAppDetails(app).bestFor}
+                      </p>
+                      {app.is_sponsored && (
+                        <span className="inline-flex mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-xs font-bold whitespace-nowrap shadow-sm">
+                          Sponsored pick
+                        </span>
                       )}
                     </div>
-                    {/* Share button on right */}
+                  </div>
+                  <div className="flex items-start gap-2 flex-shrink-0">
                     <button
-                      onClick={() => handleShareApp(app)}
-                      className="flex-shrink-0 inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 border border-blue-300 text-blue-700 shadow-sm hover:bg-blue-200 transition"
-                      title="Share this app"
-                      aria-label="Share this app"
+                      onClick={(e) => { e.stopPropagation(); handleShareApp(app); }}
+                      className="w-10 h-10 rounded-full border border-blue-200 bg-blue-50 text-blue-600 shadow-sm hover:bg-blue-100 hover:shadow transition flex items-center justify-center"
+                      title="Share app"
+                      aria-label="Share app"
                     >
                       <FaShare className="text-sm" />
                     </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSelect(app.id); }}
+                      className={`w-10 h-10 rounded-full border-2 transition-all duration-200 shadow-sm flex items-center justify-center ${
+                        selectedApps.includes(app.id)
+                          ? "bg-gradient-to-br from-[#2ad2c9] to-cyan-400 border-[#2ad2c9] text-white"
+                          : app.is_sponsored
+                          ? "bg-gradient-to-br from-amber-100 to-orange-100 border-amber-400 text-amber-700"
+                          : "bg-white border-cyan-200 text-[#2ad2c9] hover:bg-cyan-50"
+                      }`}
+                      title={selectedApps.includes(app.id) ? "Remove from bundle" : "Add to bundle"}
+                      aria-label={selectedApps.includes(app.id) ? "Remove from bundle" : "Add to bundle"}
+                    >
+                      {selectedApps.includes(app.id) ? <FaCheck className="text-base" /> : <FaPlus className="text-base" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Summary box */}
+                <div className="rounded-2xl border border-cyan-100 bg-gradient-to-br from-blue-50 to-cyan-50 p-4 sm:p-5">
+                  <p
+                    className="text-gray-700 text-sm sm:text-base leading-relaxed"
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: expandedId === app.id ? 4 : 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {app.description || "A practical travel app picked to make this destination easier, safer, and less stressful to navigate."}
+                  </p>
+                </div>
+
+                {/* Meta row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 rounded-2xl bg-yellow-50 border border-yellow-100 px-3 py-2.5">
+                    <span className="text-yellow-600 text-lg">★</span>
+                    <div>
+                      <p className="text-[11px] text-yellow-700 font-semibold uppercase tracking-wide">Rating</p>
+                      <p className="text-sm font-bold text-yellow-900">{app.rating || "4.5"}</p>
+                    </div>
+                  </div>
+                  <div className={`flex items-center gap-2 rounded-2xl px-3 py-2.5 border ${
+                    app.price
+                      ? "bg-gray-50 border-gray-200"
+                      : "bg-green-50 border-green-100"
+                  }`}>
+                    <span className="text-lg">{app.price ? "💳" : "✨"}</span>
+                    <div>
+                      <p className={`text-[11px] font-semibold uppercase tracking-wide ${app.price ? "text-gray-600" : "text-green-700"}`}>Price</p>
+                      <p className={`text-sm font-bold ${app.price ? "text-gray-800" : "text-green-700"}`}>{app.price ? "Paid" : "Free"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-2xl bg-blue-50 border border-blue-100 px-3 py-2.5">
+                    <span className="text-lg">📂</span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-blue-700 font-semibold uppercase tracking-wide">Category</p>
+                      <p className="text-sm font-bold text-blue-900 truncate">{app.category || "Travel"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-2xl bg-purple-50 border border-purple-100 px-3 py-2.5">
+                    <span className="text-lg">📱</span>
+                    <div>
+                      <p className="text-[11px] text-purple-700 font-semibold uppercase tracking-wide">Platforms</p>
+                      <p className="text-sm font-bold text-purple-900">
+                        {(app.android_link ? "Android" : "")}{app.android_link && app.ios_link ? " • " : ""}{app.ios_link ? "iOS" : app.android_link ? "" : "Web"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expand toggle row */}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleExpand(app.id); }}
+                  className="flex items-center justify-between gap-2 rounded-2xl border border-cyan-100 bg-white px-4 py-3 text-sm font-bold text-[#2ad2c9] hover:bg-cyan-50 transition-colors"
+                >
+                  <span>{expandedId === app.id ? "Hide Details" : "Discover More"}</span>
+                  {expandedId === app.id ? <FaChevronUp /> : <FaChevronDown />}
+                </button>
+
+                {/* Expandable details - Enhanced */}
+                {expandedId === app.id && (
+                  <div className="border-t-2 border-gradient to-transparent pt-4 space-y-4">
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 sm:p-5 border border-purple-100">
+                      <h3 className="text-base font-bold text-purple-900 mb-3 flex items-center gap-2">
+                        <span className="text-xl">💡</span> Why This App?
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex gap-3">
+                          <span className="text-lg mt-0.5">🎯</span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-800 text-sm mb-1">Best use case:</p>
+                            <p className="text-gray-700 text-sm leading-relaxed">{getAppDetails(app).bestFor}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <span className="text-lg mt-0.5">⭐</span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-800 text-sm mb-1">Why travelers like it:</p>
+                            <p className="text-gray-700 text-sm leading-relaxed">{getAppDetails(app).why}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <span className="text-lg mt-0.5">⚡</span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-800 text-sm mb-1">When not to use it:</p>
+                            <p className="text-gray-700 text-sm leading-relaxed">{getAppDetails(app).caution}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 sm:p-5 border border-amber-100">
+                      <h3 className="text-base font-bold text-amber-900 mb-3 flex items-center gap-2">
+                        <span className="text-xl">🧭</span> Alternatives to compare
+                      </h3>
+                      {getCategoryAlternatives(app).length > 0 ? (
+                        <ul className="space-y-2">
+                          {getCategoryAlternatives(app).map((alt) => (
+                            <li key={alt.id} className="flex items-center justify-between gap-3 rounded-xl bg-white/70 border border-amber-200 px-3 py-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-amber-900 truncate">{alt.name}</p>
+                                <p className="text-xs text-amber-700">{alt.price ? "Paid" : "Free"}</p>
+                              </div>
+                              <span className="text-xs font-bold text-amber-800 whitespace-nowrap">★ {alt.rating || "4.5"}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-amber-800 leading-relaxed">
+                          No close alternatives in this category yet. Explore nearby categories from the filter for backups.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Enhanced action buttons */}
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="border-t-2 border-cyan-100 pt-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+                    >
+                      {/* Store links on left */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {app.android_link && (
+                          <a
+                            href={app.android_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center h-11 w-11 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 border-2 border-green-300 text-white shadow-md hover:shadow-lg hover:scale-110 transition-all duration-200"
+                            aria-label="Open Play Store"
+                            title="Get on Google Play"
+                            onClick={trackAppStoreClick("play_store", app.packageName || app.id)}
+                          >
+                            <FaGooglePlay className="text-lg" />
+                          </a>
+                        )}
+                        {app.ios_link && (
+                          <a
+                            href={app.ios_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center h-11 w-11 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-600 text-white shadow-md hover:shadow-lg hover:scale-110 transition-all duration-200"
+                            aria-label="Open App Store"
+                            title="Get on App Store"
+                            onClick={trackAppStoreClick("app_store", app.packageName || app.id)}
+                          >
+                            <FaApple className="text-lg" />
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Compact rating on bottom-right */}
+                      <div className="relative w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => setRatingPickerFor((prev) => (prev === app.id ? null : app.id))}
+                          className="h-11 inline-flex items-center gap-2 rounded-full border border-violet-300 bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 text-white text-xs font-semibold shadow-md hover:shadow-lg transition-all"
+                          aria-label="Rate this app recommendation"
+                          title="Rate this app recommendation"
+                        >
+                          <span className="text-sm leading-none">★</span>
+                          <span>{userRatings[app.id] ? `${userRatings[app.id]}/5` : "Rate"}</span>
+                        </button>
+
+                        {ratingPickerFor === app.id && (
+                          <div className="absolute right-0 bottom-14 z-20 w-[220px] rounded-2xl border border-violet-200 bg-white/95 backdrop-blur p-3 shadow-xl">
+                            <p className="text-xs font-semibold text-slate-700 mb-2">Tap to rate</p>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => {
+                                const active = (userRatings[app.id] || 0) >= star;
+                                return (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => handleSetRating(app.id, star)}
+                                    className={`h-8 w-8 rounded-lg border text-base leading-none transition ${
+                                      active
+                                        ? "border-amber-300 bg-amber-50 text-amber-500"
+                                        : "border-slate-200 bg-white text-slate-300 hover:border-violet-300 hover:text-violet-500"
+                                    }`}
+                                    aria-label={`Rate ${star} out of 5`}
+                                    title={`${star} out of 5`}
+                                  >
+                                    ★
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="mt-2 flex items-center justify-between">
+                              <button
+                                type="button"
+                                onClick={() => handleClearRating(app.id)}
+                                className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                              >
+                                Clear
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setRatingPickerFor(null)}
+                                className="text-xs font-semibold text-violet-600 hover:text-violet-800"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="w-full mt-6 flex flex-col items-center gap-3">
+          <p className="text-xs sm:text-sm text-gray-600">
+            Showing {filteredApps.length ? pageStart + 1 : 0}-{Math.min(pageStart + APPS_PER_PAGE, filteredApps.length)} of {filteredApps.length} apps
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Prev
+            </button>
+            <span className="px-3 py-1.5 rounded-lg bg-gray-100 text-sm font-semibold text-gray-700">
+              Page {currentPage} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
         </div>
 
         {/* Right: Selected Apps Sidebar */}
