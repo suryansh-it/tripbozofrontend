@@ -25,6 +25,15 @@ export default function AboutPageClient() {
     setSubmitted(true);
   };
 
+  const splitFeatureText = (text) => {
+    const idx = text.indexOf('. ');
+    if (idx === -1) return { lead: text, rest: '' };
+    return {
+      lead: text.slice(0, idx + 1),
+      rest: text.slice(idx + 2),
+    };
+  };
+
   return (
     <>
       {/* JSON‑LD */}
@@ -35,7 +44,7 @@ export default function AboutPageClient() {
           name: "Trip Bozo",
           url: "https://tripbozo.com",
           logo: "https://tripbozo.com/logo.png",
-          description: "Trip Bozo curates the perfect app bundle for every traveler's needs.",
+          description: "tripbozo helps travelers discover destination-specific app bundles, practical Essentials guidance, and helpful travel tools that make each trip easier to plan and safer to enjoy.",
           sameAs: [
             "https://twitter.com/tripbozo",
             "https://facebook.com/tripbozo",
@@ -56,7 +65,7 @@ export default function AboutPageClient() {
             Your Essential<br className="hidden sm:block" /> Travel Companion
           </h1>
           <p className="text-xl sm:text-2xl max-w-2xl mx-auto mb-8 text-white/90 font-medium drop-shadow animate-fade-in-up delay-200 relative z-10">
-            tripbozo curates the perfect app bundle for every traveler&apos;s needs, no matter where your journey takes you.
+            tripbozo curates destination-ready app bundles, practical Essentials, and country-specific guidance so you can spend less time searching and more time traveling.
           </p>
         </section>
 
@@ -69,7 +78,7 @@ export default function AboutPageClient() {
                 Our Mission
               </h2>
               <p className="text-lg text-gray-600 mb-6">
-                We believe that <span className="text-teal-600 font-semibold">technology should enhance your travel experience</span>, not complicate it. Our mission is to help travelers discover the essential digital tools they need for each unique destination, creating a more connected, prepared, and enriching journey.
+                We believe that <span className="text-teal-600 font-semibold">technology should make travel feel easier, clearer, and more confident</span>, not add extra friction. Our mission is to help travelers find the right digital tools for the right destination, with recommendations that save time, reduce guesswork, and support better decisions before and during a trip.
               </p>
               {/* <Link
                 href="/"
@@ -87,34 +96,50 @@ export default function AboutPageClient() {
         </section>
 
         {/* Key Features */}
-        <section className="w-full py-16 px-4 sm:px-8">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl sm:text-5xl font-bold text-gray-800 text-center mb-8 sm:mb-16">
+        <section className="w-full py-24 sm:py-28 px-4 sm:px-8">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl sm:text-5xl font-bold text-gray-800 text-center mb-12 sm:mb-20">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-500 to-blue-500">
                 Key Features
               </span>
             </h2>
             {/* Feature Items */}
             {[
-
-              { icon: '📱', title: 'Curated App Collections', text: 'Expert-vetted selections of the best travel apps for every destination, organized by category. Save time researching and focus on enjoying your trip.', align: 'left', bg: 'bg-cyan-100' },
-              { icon: '🚨', title: 'Comprehensive Travel Essentials', text: 'Access offline emergency contacts, key local phrases, safety tips, and essential services—all curated for your destination', align: 'right', bg: 'bg-yellow-100' },
-              { icon: '🏔️', title: 'Dynamic Leg Suggestions', text: 'Receive app recommendations based on the type of stop in your journey, from beach destinations to mountain retreats. Our AI-powered system learns your preferences to suggest exactly what you need.', align: 'left', bg: 'bg-blue-100' },
-              { icon: '🧑‍💼', title: 'Personalized Onboarding', text: 'Tell us about your travel style and destinations to get the most relevant app suggestions for your journey. We tailor recommendations based on your unique preferences.', align: 'right', bg: 'bg-teal-100' },
+              { icon: '📱', title: 'Curated App Collections', text: 'See the best travel apps for each destination in one place, with direct install links, alternatives, and ratings. It cuts out the noise and helps travelers choose faster for navigation, rides, payments, translation, and local discovery. You spend less time comparing random apps and more time preparing a bundle that actually fits your trip style.', align: 'left', bg: 'bg-cyan-100' },
+              { icon: '🚨', title: 'Comprehensive Travel Essentials', text: 'Find emergency contacts, embassy help, phrases, transit basics, payment tips, scam warnings, and offline-ready guidance. Everything important is grouped into one easy reference, so travelers can act quickly before and during a trip. Instead of searching multiple sites in a stressful moment, the core information is already organized and ready to use.', align: 'right', bg: 'bg-yellow-100' },
+              { icon: '🗺️', title: 'Country Travel Guide', text: 'Open a destination guide that connects app picks with local travel reality. It shows what matters most for that country, from transport and safety to connectivity and money habits, so the suggestions feel practical instead of generic. This helps users understand not just what to install, but why each recommendation is useful in that specific place.', align: 'left', bg: 'bg-blue-100' },
+              { icon: '🧭', title: 'Personalized Onboarding', text: 'A short intro explains how tripbozo works and lets you save your origin country. That makes the guidance feel more relevant from the first visit, with better support and less guesswork. The setup stays lightweight, but still gives enough context to personalize Essentials and improve the quality of recommendations.', align: 'right', bg: 'bg-teal-100' },
               
-            ].map((feat, i) => (
-              <div key={i} className={`mb-16 sm:mb-24 flex flex-col ${feat.align==='right' ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-8`}>
+            ].map((feat, i) => {
+              const parts = splitFeatureText(feat.text);
+              return (
+              <div key={i} className={`group mb-24 sm:mb-28 flex flex-col ${feat.align==='right' ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-12 sm:gap-14`}>
                 <div className="md:w-1/3 flex justify-center">
-                  <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full ${feat.bg} flex items-center justify-center shadow-lg`}>
-                    <span className="text-5xl md:text-6xl">{feat.icon}</span>
+                  <div className={`relative w-24 h-24 md:w-32 md:h-32 rounded-3xl ${feat.bg} flex items-center justify-center shadow-lg overflow-hidden group-hover:shadow-2xl transition-all duration-300`}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/25 to-transparent" />
+                    <span className="relative text-4xl md:text-5xl group-hover:scale-110 transition-transform duration-300">{feat.icon}</span>
                   </div>
                 </div>
-                <div className={`md:w-2/3 text-center ${feat.align==='right' ? 'md:text-right' : 'md:text-left'}`}>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">{feat.title}</h3>
-                  <p className="text-lg text-gray-600">{feat.text}</p>
+                <div className={`md:w-[68%] text-center ${feat.align==='right' ? 'md:text-right' : 'md:text-left'}`}>
+                  <h3 className="text-2xl sm:text-[2rem] font-extrabold tracking-tight text-slate-900 mb-3 sm:mb-4">
+                    <span className="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent group-hover:from-cyan-700 group-hover:to-blue-700 transition-all duration-300">
+                      {feat.title}
+                    </span>
+                  </h3>
+                  <div className={`mb-4 sm:mb-5 h-1 w-24 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 ${feat.align==='right' ? 'ml-auto' : 'mr-auto'} opacity-80 group-hover:w-28 transition-all duration-300`} />
+                  <div className="mx-auto max-w-4xl px-1 sm:px-0">
+                    <p className="text-[1.02rem] sm:text-[1.08rem] text-slate-700 leading-8 sm:leading-[2.05rem] group-hover:text-slate-800 transition-colors duration-300">
+                      <span className="font-semibold text-slate-900">{parts.lead}</span>
+                    </p>
+                    {parts.rest ? (
+                      <p className="mt-3 sm:mt-4 text-[0.98rem] sm:text-[1.05rem] text-slate-600 leading-8 sm:leading-[1.95rem]">
+                        {parts.rest}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </section>
 

@@ -2,13 +2,13 @@ import AboutPageClient from '@/components/about/AboutPageClient';
 
 export const metadata = {
   title: 'About tripbozo | Your Essential Travel App Companion',
-  description: 'Learn about tripbozo, the app that curates travel app bundles tailored to your destination. Discover our mission, features, and how we help travelers worldwide.',
+  description: 'Learn how tripbozo helps travelers discover country-specific app bundles, practical Essentials, useful alternatives, and personalized onboarding for each destination.',
   alternates: {
     canonical: 'https://tripbozo.com/About',
   },
   openGraph: {
     title: 'About tripbozo | Your Essential Travel App Companion',
-    description: 'Learn about tripbozo, the app that curates travel app bundles tailored to your destination. Discover our mission, features, and how we help travelers worldwide.',
+    description: 'Learn how tripbozo helps travelers discover country-specific app bundles, practical Essentials, useful alternatives, and personalized onboarding for each destination.',
   }
 };
 
