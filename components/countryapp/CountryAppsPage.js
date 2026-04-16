@@ -182,7 +182,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
   const handleShareApp = (app) => {
     const playStoreUrl = app.android_link || "";
     const appStoreUrl = app.ios_link || "";
-    const shareText = `Check out ${app.name} - ${app.description || "A great travel app!"}`;
+    const shareText = `Check out ${app.name} - ${cleanDescription(app.description, 100)}`;
     const shareUrl = playStoreUrl || appStoreUrl || "";
 
     if (navigator.share) {
@@ -199,11 +199,155 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
     }
   };
 
+  const normalizeRawText = (text) => {
+    if (!text || typeof text !== "string") return "";
+
+    return text
+      .replace(/<br\s*\/?\s*>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "\n- ")
+      .replace(/<\/li>/gi, "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/\r/g, "\n")
+      .replace(/\t+/g, " ")
+      .replace(/[ ]{2,}/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  };
+
+  const normalizeKey = (text) =>
+    String(text || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const splitToLines = (text) => {
+    const normalized = normalizeRawText(text);
+    if (!normalized) return [];
+
+    const seeded = normalized
+      .replace(/[•●▪◦·]/g, "\n")
+      .replace(/\s[-*]\s+/g, "\n")
+      .replace(/\s+[;|]\s+/g, ". ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const rawChunks = seeded
+      .split(/\n+/)
+      .flatMap((chunk) => chunk.split(/(?<=[.!?])\s+/))
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    const unique = [];
+    const seen = new Set();
+
+    rawChunks.forEach((line) => {
+      const cleaned = line
+        .replace(/^[-*]\s*/, "")
+        .replace(/^\d+[.)]\s*/, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (cleaned.length < 8) return;
+
+      const key = normalizeKey(cleaned);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      unique.push(cleaned);
+    });
+
+    return unique;
+  };
+
+  const ensureSentence = (line) => {
+    const text = String(line || "").trim();
+    if (!text) return "";
+    return /[.!?]$/.test(text) ? text : `${text}.`;
+  };
+
+  const splitLongLine = (line) => {
+    const text = String(line || "").trim();
+    if (!text) return [];
+    if (text.length < 120) return [text];
+
+    const mid = Math.floor(text.length / 2);
+    const breakCandidates = [". ", "; ", ": ", ", ", " - "];
+
+    let splitIndex = -1;
+    breakCandidates.forEach((token) => {
+      if (splitIndex !== -1) return;
+      const right = text.indexOf(token, mid - 30);
+      if (right !== -1 && right <= mid + 40) {
+        splitIndex = right + token.length - 1;
+      }
+    });
+
+    if (splitIndex === -1) {
+      const spaceIndex = text.lastIndexOf(" ", mid);
+      if (spaceIndex > 30) splitIndex = spaceIndex;
+    }
+
+    if (splitIndex === -1) return [text];
+
+    const first = text.slice(0, splitIndex).trim();
+    const second = text.slice(splitIndex).trim();
+    return [first, second].filter(Boolean);
+  };
+
+  const dedupeLines = (lines) => {
+    const seen = new Set();
+    const unique = [];
+
+    lines.forEach((line) => {
+      const key = normalizeKey(line);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      unique.push(line);
+    });
+
+    return unique;
+  };
+
   const getAppDetails = (app) => {
-    const bestFor = app.best_for || `Travelers in ${countryInfo.name} needing ${String(app.category || "essential").toLowerCase()} support.`;
-    const why = app.why_recommended || app.description || "Popular among travelers for reliability and ease of use.";
-    const caution = app.caution_note || "Check pricing, region availability, and account requirements before your trip.";
-    return { bestFor, why, caution };
+    const baseDescription = dedupeLines(splitToLines(app.description).flatMap(splitLongLine));
+    const baseWhy = dedupeLines(splitToLines(app.why_recommended).flatMap(splitLongLine));
+    const baseBestFor = dedupeLines(splitToLines(app.best_for).flatMap(splitLongLine));
+    const baseCaution = dedupeLines(splitToLines(app.caution_note).flatMap(splitLongLine));
+
+    const mergedDescriptionPoints = dedupeLines([
+      ...baseDescription,
+      ...baseWhy,
+      ...baseCaution,
+    ]);
+
+    if (mergedDescriptionPoints.length === 1) {
+      mergedDescriptionPoints.push(`Useful for travelers in ${countryInfo.name}, especially for ${String(app.category || "travel").toLowerCase()} needs.`);
+    }
+    if (mergedDescriptionPoints.length === 0) {
+      mergedDescriptionPoints.push(
+        "A practical travel app picked to make this destination easier, safer, and less stressful to navigate.",
+        `Useful for travelers in ${countryInfo.name}, especially for ${String(app.category || "travel").toLowerCase()} needs.`
+      );
+    }
+
+    const topBlurbSource = baseDescription[0] || baseWhy[0] || baseBestFor[0] || "";
+    const topBlurb = topBlurbSource
+      ? cleanDescription(topBlurbSource, 120)
+      : cleanDescription(`${app.name} helps travelers with ${String(app.category || "travel").toLowerCase()} during trips in ${countryInfo.name}.`, 120);
+
+    return {
+      topBlurb: ensureSentence(topBlurb),
+      descriptionPoints: mergedDescriptionPoints.slice(0, 10).map(ensureSentence),
+      bestFor: ensureSentence(
+        baseBestFor[0] || `Best for travelers in ${countryInfo.name} who need ${String(app.category || "travel").toLowerCase()} support.`
+      ),
+    };
   };
 
   const getCategoryAlternatives = (app) => {
@@ -226,7 +370,86 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
     });
   };
 
+  /**
+   * cleanDescription - Formats raw database descriptions into proper, readable text
+   * 1. Removes extra whitespace, newlines, and weird characters
+   * 2. Ensures proper capitalization and punctuation
+   * 3. Truncates to a sensible length
+   * 4. Returns meaningful, travel-focused copy
+   */
+  const cleanDescription = (text, maxLength = 150) => {
+    if (!text || typeof text !== "string") {
+      return "A practical travel app picked to make this destination easier, safer, and less stressful to navigate.";
+    }
 
+    // Remove extra whitespace, tabs, multiple spaces, and newlines
+    let cleaned = text
+      .replace(/\n+/g, " ")          // Replace newlines with space
+      .replace(/\t+/g, " ")          // Replace tabs with space
+      .replace(/\s+/g, " ")          // Replace multiple spaces with single space
+      .trim();
+
+    // Remove common redundant phrases from database imports
+    const redundantPhrases = [
+      /^[a-z]+ app\s*/i,            // "maps app" → ""
+      /^stay connected with [a-z]+/i, // "stay connected with..." → ""
+      /^this app for/i,             // "this app for" → ""
+      /^an app for/i,               // "an app for" → ""
+      /^a comprehensive [a-z]+ app/i, // "a comprehensive..." → ""
+    ];
+
+    redundantPhrases.forEach((regex) => {
+      cleaned = cleaned.replace(regex, "").trim();
+    });
+
+    // Ensure it starts with capital letter
+    if (cleaned.length > 0) {
+      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    }
+
+    // Ensure proper ending punctuation
+    if (!/[.!?]$/.test(cleaned)) {
+      cleaned += ".";
+    }
+
+    // Truncate to maxLength, but try to cut at a word boundary
+    if (cleaned.length > maxLength) {
+      let truncated = cleaned.substring(0, maxLength);
+      // Find the last space before maxLength
+      const lastSpace = truncated.lastIndexOf(" ");
+      if (lastSpace > maxLength * 0.7) {
+        truncated = cleaned.substring(0, lastSpace);
+      }
+      // Add ellipsis if truncated
+      if (!truncated.endsWith(".")) {
+        truncated = truncated.replace(/[.!?]*$/, "") + "...";
+      }
+      return truncated;
+    }
+
+    return cleaned;
+  };
+
+  const formatContentModular = (content) => {
+    const values = Array.isArray(content)
+      ? content
+      : splitToLines(content);
+
+    const lines = values.length
+      ? values.map(ensureSentence).filter(Boolean)
+      : ["Essential travel resource."];
+
+    return (
+      <ul className="space-y-2">
+        {lines.map((line, idx) => (
+          <li key={`${normalizeKey(line)}_${idx}`} className="text-gray-700 text-sm leading-relaxed flex items-start gap-2">
+            <span className="mt-1 text-cyan-500">•</span>
+            <span className="flex-1">{line}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   return (
     // clicking outside any card collapses all
@@ -235,7 +458,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
       className="bg-[#f7fafc] animate-fade-in"
     >
      {/* Hero Section */}
-     <div className="relative w-full h-[340px] overflow-hidden rounded-b-3xl shadow-lg">
+    <div className="relative w-full h-[260px] sm:h-[300px] md:h-[340px] overflow-hidden rounded-b-2xl sm:rounded-b-3xl shadow-lg">
         <NextImage
           src={heroSrc}
           
@@ -256,17 +479,17 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
     
 
     
-        <div className="relative w-[92vw] max-w-[1920px] mx-auto px-14 flex flex-col justify-center h-full z-10"> 
+        <div className="relative w-[94vw] max-w-[1920px] mx-auto px-3 sm:px-6 md:px-10 lg:px-14 flex flex-col justify-center h-full z-10"> 
                  {/* ✅ Dynamically show code, name and description from `countryInfo` */}
-         <div className="flex items-center gap-6 mb-2 mt-8">
-           <span className="text-4xl font-bold text-white/80">
+         <div className="flex items-center gap-2 sm:gap-4 md:gap-6 mb-1 sm:mb-2 mt-3 sm:mt-6 md:mt-8">
+           <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-white/80">
              {countryInfo.code}
            </span>
-           <span className="text-6xl font-black text-white ml-3 drop-shadow-lg">
+           <span className="text-3xl sm:text-5xl md:text-6xl font-black text-white ml-1 sm:ml-3 drop-shadow-lg leading-tight">
              {countryInfo.name}
            </span>
          </div>
-         <p className="text-2xl max-w-4xl text-white/90 font-normal mb-4 mt-1 drop-shadow">
+         <p className="text-sm sm:text-lg md:text-2xl max-w-4xl text-white/90 font-normal mb-3 sm:mb-4 mt-1 drop-shadow line-clamp-3 sm:line-clamp-none">
            {countryInfo.description}
          </p>
           <div
@@ -276,8 +499,8 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
         </div>
       </div>
       {/* Search & Filter (overlapping hero) */}
-      <div className="relative z-20 -mt-8 w-full max-w-[1920px] mx-auto px-2 sm:px-6 md:px-14">
-        <div className="flex flex-row gap-3 items-center justify-between">
+      <div className="relative z-20 -mt-6 sm:-mt-8 w-full max-w-[1920px] mx-auto px-2 sm:px-6 md:px-14">
+        <div className="flex flex-row gap-2 sm:gap-3 items-center justify-between">
           {/* Search Input */}
           <div className="flex-1 flex items-center h-12 sm:h-16 px-3 sm:px-6 bg-white rounded-xl sm:rounded-2xl shadow-md border border-[#e0e0e0] focus-within:ring-2 focus-within:ring-[#2ad2c9] transition min-w-[180px] sm:min-w-[300px]">
             <svg
@@ -302,13 +525,18 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
           </div>
 
           {/* Filter Dropdown */}
-          <div className="relative h-12 sm:h-16 w-32 sm:w-36">
+          <div className="relative h-12 sm:h-16 w-[92px] sm:w-36 shrink-0">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="h-full w-full rounded-xl sm:rounded-2xl border border-gray-300 bg-white px-3 sm:px-4 flex items-center justify-between text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-[#2ad2c9] transition"
+              className={`h-full w-full rounded-full sm:rounded-2xl border px-2.5 sm:px-4 flex items-center justify-center gap-1 sm:justify-between text-[11px] sm:text-base font-semibold transition shadow-sm focus:ring-2 focus:ring-[#2ad2c9] ${
+                isFilterOpen
+                  ? "border-cyan-300 bg-cyan-50 text-cyan-800"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
             >
-              {filterOptions.find((opt) => opt.value === filterType)?.label}
-              <FaCaretDown className={`ml-2 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+              <span className="sm:hidden">Filter</span>
+              <span className="hidden sm:inline">{filterOptions.find((opt) => opt.value === filterType)?.label}</span>
+              <FaCaretDown className={`ml-0.5 sm:ml-2 text-[10px] sm:text-base transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
             </button>
             {isFilterOpen && (
               <div className="absolute top-full right-0 mt-1 w-full bg-white rounded-xl shadow-lg border border-gray-300 py-2 z-30">
@@ -374,11 +602,13 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
       </div>
 
       {/* Main content with apps grid and sidebar */}
-      <div className="w-full max-w-[1920px] mx-auto flex flex-col lg:flex-row gap-8 px-2 sm:px-6 md:px-14 pb-16">
+      <div className="w-full max-w-[1920px] mx-auto flex flex-col lg:flex-row gap-5 sm:gap-8 px-2 sm:px-6 md:px-14 pb-16">
         {/* Left: Apps Grid */}
         <div className="flex-1">
         <div className="grid grid-cols-1 gap-5 sm:gap-6 items-start">
-        {paginatedApps.map((app) => (
+        {paginatedApps.map((app) => {
+          const details = getAppDetails(app);
+          return (
             <div
               key={app.id}
               onClick={(e) => { e.stopPropagation(); toggleExpand(app.id); }}
@@ -423,7 +653,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
                         </h2>
                       </div>
                       <p className="mt-1 text-xs sm:text-sm text-gray-500 leading-snug">
-                        {getAppDetails(app).bestFor}
+                        {details.bestFor}
                       </p>
                       {app.is_sponsored && (
                         <span className="inline-flex mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-xs font-bold whitespace-nowrap shadow-sm">
@@ -464,12 +694,13 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
                     className="text-gray-700 text-sm sm:text-base leading-relaxed"
                     style={{
                       display: "-webkit-box",
-                      WebkitLineClamp: expandedId === app.id ? 4 : 2,
+                      WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
+                      minHeight: "2.9em",
                     }}
                   >
-                    {app.description || "A practical travel app picked to make this destination easier, safer, and less stressful to navigate."}
+                    {details.topBlurb}
                   </p>
                 </div>
 
@@ -531,22 +762,15 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
                         <div className="flex gap-3">
                           <span className="text-lg mt-0.5">🎯</span>
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-800 text-sm mb-1">Best use case:</p>
-                            <p className="text-gray-700 text-sm leading-relaxed">{getAppDetails(app).bestFor}</p>
+                            <p className="font-semibold text-gray-800 text-sm mb-2">Best use case:</p>
+                            <div className="text-gray-700 text-sm">{formatContentModular([details.bestFor])}</div>
                           </div>
                         </div>
                         <div className="flex gap-3">
-                          <span className="text-lg mt-0.5">⭐</span>
+                          <span className="text-lg mt-0.5">📝</span>
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-800 text-sm mb-1">Why travelers like it:</p>
-                            <p className="text-gray-700 text-sm leading-relaxed">{getAppDetails(app).why}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <span className="text-lg mt-0.5">⚡</span>
-                          <div className="flex-1">
-                            <p className="font-semibold text-gray-800 text-sm mb-1">When not to use it:</p>
-                            <p className="text-gray-700 text-sm leading-relaxed">{getAppDetails(app).caution}</p>
+                            <p className="font-semibold text-gray-800 text-sm mb-2">Description:</p>
+                            <div className="text-gray-700 text-sm">{formatContentModular(details.descriptionPoints)}</div>
                           </div>
                         </div>
                       </div>
@@ -578,10 +802,10 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
                     {/* Enhanced action buttons */}
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="border-t-2 border-cyan-100 pt-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+                      className="relative border-t-2 border-cyan-100 pt-4 flex flex-row items-end justify-between gap-4"
                     >
                       {/* Store links on left */}
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                         {app.android_link && (
                           <a
                             href={app.android_link}
@@ -611,20 +835,20 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
                       </div>
 
                       {/* Compact rating on bottom-right */}
-                      <div className="relative w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative ml-auto shrink-0" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => setRatingPickerFor((prev) => (prev === app.id ? null : app.id))}
-                          className="h-11 inline-flex items-center gap-2 rounded-full border border-violet-300 bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 text-white text-xs font-semibold shadow-md hover:shadow-lg transition-all"
+                          className="h-10 sm:h-11 inline-flex items-center gap-2 rounded-full border border-violet-300 bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 sm:px-4 text-white text-[11px] sm:text-xs font-semibold shadow-md hover:shadow-lg transition-all"
                           aria-label="Rate this app recommendation"
                           title="Rate this app recommendation"
                         >
-                          <span className="text-sm leading-none">★</span>
+                          <span className="text-xs sm:text-sm leading-none">★</span>
                           <span>{userRatings[app.id] ? `${userRatings[app.id]}/5` : "Rate"}</span>
                         </button>
 
                         {ratingPickerFor === app.id && (
-                          <div className="absolute right-0 bottom-14 z-20 w-[220px] rounded-2xl border border-violet-200 bg-white/95 backdrop-blur p-3 shadow-xl">
+                          <div className="absolute right-0 bottom-12 z-20 w-[220px] rounded-2xl border border-violet-200 bg-white/95 backdrop-blur p-3 shadow-xl sm:bottom-14">
                             <p className="text-xs font-semibold text-slate-700 mb-2">Tap to rate</p>
                             <div className="flex items-center gap-1">
                               {[1, 2, 3, 4, 5].map((star) => {
@@ -671,7 +895,8 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
 
         <div className="w-full mt-6 flex flex-col items-center gap-3">
@@ -703,8 +928,8 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
         </div>
 
         {/* Right: Selected Apps Sidebar */}
-        <div className="lg:w-[350px] bg-white rounded-2xl shadow-md border border-gray-200 p-6 h-fit sticky top-24">
-        <h2 className="text-xl font-bold mb-6 text-gray-800">Selected Apps ({selectedApps.length})</h2>
+        <div className="order-first lg:order-none lg:w-[350px] bg-white rounded-2xl shadow-md border border-gray-200 p-6 h-fit sticky top-24 max-[639px]:p-4 max-[639px]:max-h-[78vh] max-[639px]:overflow-hidden sm:max-h-none sm:overflow-visible">
+        <h2 className="text-xl font-bold mb-6 text-gray-800 max-[639px]:text-lg max-[639px]:mb-4">Selected Apps ({selectedApps.length})</h2>
           
         {selectedApps.length === 0 ? (
          <div className="text-center py-8">
@@ -714,31 +939,32 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
            </p>
          </div>
        ) : (
-         <div className="space-y-4 mb-6">
+         <div className="space-y-4 mb-6 lg:max-h-[340px] lg:overflow-y-auto lg:pr-1 max-[639px]:grid max-[639px]:grid-flow-col max-[639px]:auto-cols-max max-[639px]:gap-2 max-[639px]:mb-4 max-[639px]:overflow-x-auto max-[639px]:overflow-y-hidden max-[639px]:pb-1">
            {selectedApps.map(appId => {
              const app = apps.find(a => a.id === appId);
              return app ? (
                <div
                  key={app.id}
-                 className="flex items-center gap-3 p-3 bg-gray-100 rounded-xl"
+                 className="flex items-center gap-3 p-3 bg-gray-100 rounded-xl min-w-0 max-[639px]:w-[98px] max-[639px]:h-[56px] max-[639px]:justify-between max-[639px]:gap-1.5 max-[639px]:px-2 max-[639px]:py-1.5"
                >
-                 <div className="w-10 h-10 relative flex-shrink-0">
+                 <div className="w-10 h-10 relative flex-shrink-0 max-[639px]:w-9 max-[639px]:h-9">
                    <NextImage
                      src={app.icon_url || "/file.svg"}
                      alt={app.name}
                      fill
-                     className="object-cover rounded-lg"
+                      className="object-cover rounded-md"
                    />
                  </div>
-                 <span className="flex-1 text-gray-900 font-medium">
+                 <span className="hidden sm:block flex-1 text-gray-900 font-medium truncate">
                    {app.name}
                  </span>
                  <button
                    onClick={() => toggleSelect(app.id)}
-                   className="text-red-500 hover:text-red-700"
+                   className="inline-flex h-auto w-auto shrink-0 items-center justify-center rounded-none bg-transparent p-0 text-red-500 hover:text-red-700 max-[639px]:h-7 max-[639px]:w-7 max-[639px]:rounded-md max-[639px]:bg-red-100 max-[639px]:hover:bg-red-200 max-[639px]:shadow-none"
                    aria-label={`Remove ${app.name}`}
+                   title={`Remove ${app.name}`}
                  >
-                   <FaTimes />
+                   <FaTimes className="text-base leading-none max-[639px]:text-sm" />
                  </button>
                </div>
              ) : null;
@@ -747,37 +973,39 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
        )}
 
           {/* Buttons group at bottom */}
-        <div className="flex flex-col gap-3 mt-6">
+        <div className="flex flex-col gap-3 mt-6 max-[639px]:grid max-[639px]:grid-cols-3 max-[639px]:gap-2 max-[639px]:mt-4">
           <button
             onClick={handleGenerateQR}
             disabled={!selectedApps.length}
-            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition ${
+            className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white text-sm font-semibold transition max-[639px]:flex-col max-[639px]:gap-1 max-[639px]:px-2 max-[639px]:py-2 max-[639px]:text-[11px] ${
               selectedApps.length
                 ? "bg-teal-400 hover:bg-teal-500 shadow-lg"
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >
-            <FaQrcode className="text-lg" />
-            Generate QR Code
+            <FaQrcode className="text-lg max-[639px]:text-base" />
+            <span className="max-[639px]:block">QR</span>
+            <span className="max-[639px]:hidden">Generate QR Code</span>
           </button>
 
           <button
             onClick={handleEssentialsClick}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-300 hover:bg-blue-400 text-blue-900 font-semibold shadow-lg transition"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-blue-300 hover:bg-blue-400 text-blue-900 text-sm font-semibold shadow-lg transition max-[639px]:flex-col max-[639px]:gap-1 max-[639px]:px-2 max-[639px]:py-2 max-[639px]:text-[11px]"
           >
-            <FaGlobe className="text-lg" />
-            Essentials
+            <FaGlobe className="text-lg max-[639px]:text-base" />
+            <span>Essentials</span>
           </button>
 
           <button
             onClick={clearAll}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-red-300 hover:bg-red-400 text-red-900 font-semibold shadow-lg transition"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-red-300 hover:bg-red-400 text-red-900 text-sm font-semibold shadow-lg transition max-[639px]:flex-col max-[639px]:gap-1 max-[639px]:px-2 max-[639px]:py-2 max-[639px]:text-[11px]"
           >
-            Clear All
+            <FaTimes className="text-lg max-[639px]:text-base" />
+            <span>Clear All</span>
           </button>
 
           {selectedApps.length > 0 && (
-            <p className="text-xs text-center text-gray-500 mt-1">
+            <p className="text-xs text-center text-gray-500 mt-1 max-[639px]:col-span-3 max-[639px]:text-[10px] max-[639px]:mt-0.5 max-[639px]:whitespace-nowrap">
               Select at least 2 apps to generate a QR code
             </p>
           )}
