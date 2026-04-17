@@ -23,11 +23,17 @@ export default function GoogleLoginBtn({ text = "continue_with", useOneTap = fal
       setLoading(true);
       setErrorMessage("");
       try {
-        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/social/google/`, {
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/social/google/`, {
           access_token: accessToken,
         });
 
-        localStorage.setItem("authToken", res.data.key);
+        const token = res?.data?.access || res?.data?.key || "";
+        if (!token) {
+          setErrorMessage("Google sign-in succeeded but no auth token was returned.");
+          return;
+        }
+
+        localStorage.setItem("authToken", token);
         router.push("/");
       } catch (error) {
         const apiDetail = getFriendlyAuthMessage(

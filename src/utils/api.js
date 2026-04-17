@@ -103,6 +103,9 @@ export function getFriendlyAuthMessage(err, fallbackMessage, context = "generic"
   const status = err?.response?.status;
   const message = normalized.message || fallbackMessage;
   const lowerMessage = String(message).toLowerCase();
+  const isGenericMessage =
+    !lowerMessage ||
+    /login failed|registration failed|something went wrong|request failed/.test(lowerMessage);
 
   if (context === "google") {
     if (status === 404 || /no account|not found|does not exist|unknown user|no active account/.test(lowerMessage)) {
@@ -120,13 +123,25 @@ export function getFriendlyAuthMessage(err, fallbackMessage, context = "generic"
     }
 
     if (status === 401 || /incorrect|invalid|wrong password|authentication failed/.test(lowerMessage)) {
-      return "Wrong email, username, or password.";
+      return "Wrong password, or no account exists with those credentials.";
+    }
+
+    if (isGenericMessage) {
+      return "Unable to sign in. Check your email/username and password, or create an account.";
     }
   }
 
   if (context === "register") {
     if (status === 409 || /already exists|already taken|unique/.test(lowerMessage)) {
       return "An account with those details already exists. Try logging in instead.";
+    }
+
+    if (status === 400) {
+      return "Registration details are invalid. Please correct the highlighted fields.";
+    }
+
+    if (isGenericMessage) {
+      return "Unable to create your account right now. Please review your details and try again.";
     }
   }
 
