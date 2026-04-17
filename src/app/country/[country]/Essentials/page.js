@@ -23,11 +23,13 @@ export default function EssentialsPage() {
     originAssistance: null,
   });
   const [loading, setLoading] = useState(true);
+  const [isAssistanceLoading, setIsAssistanceLoading] = useState(false);
   const [speakingKey, setSpeakingKey] = useState(null);
   const [originCountry, setOriginCountry] = useState(null);
   const [voices, setVoices] = useState([]);
   const audioRef = useRef(null);
   const translateCacheRef = useRef(new Map());
+  const essentialsRequestRef = useRef(0);
 
   const COUNTRY_NAME_BY_CODE = {
     AE: "United Arab Emirates",
@@ -113,9 +115,13 @@ export default function EssentialsPage() {
 
   // Fetch the essentials, but DO NOT touch the loader here
   useEffect(() => {
+    const requestId = ++essentialsRequestRef.current;
     const originCode = originCountry?.code || "";
+    if (originCode) setIsAssistanceLoading(true);
+
     fetchEssentials(country.toUpperCase(), originCode)
       .then((json) => {
+        if (requestId !== essentialsRequestRef.current) return;
         setData({
           emergencies: Array.isArray(json?.emergencies) ? json.emergencies : [],
           phrases: Array.isArray(json?.phrases) ? json.phrases : [],
@@ -127,7 +133,11 @@ export default function EssentialsPage() {
       .catch(() => {
         // on error, set your fallback
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestId !== essentialsRequestRef.current) return;
+        setLoading(false);
+        setIsAssistanceLoading(false);
+      });
   }, [country, originCountry?.code]);
 
   useEffect(() => {
@@ -226,6 +236,17 @@ export default function EssentialsPage() {
   ];
 
   const originAssistance = data.originAssistance;
+  const hasOriginAssistanceDetails = Boolean(
+    originAssistance &&
+      (
+        originAssistance.label ||
+        originAssistance.emergency_phone ||
+        originAssistance.emergency_phone_intl ||
+        originAssistance.consular_address ||
+        originAssistance.website ||
+        originAssistance.mission_finder
+      )
+  );
 
 // Sample fallbacks
 const sampleInsurance = [
@@ -693,7 +714,11 @@ const sampleEsim = [
               <p>
                 Traveling from <strong>{originCountry.name}</strong> to <strong>{countryName}</strong>. Contact your consular support team:
               </p>
-              {originAssistance ? (
+              {isAssistanceLoading ? (
+                <div className="rounded-lg border border-indigo-200 bg-white/70 px-3 py-2 text-indigo-900">
+                  Loading your origin-country consular support details...
+                </div>
+              ) : hasOriginAssistanceDetails ? (
                 <>
                   <p>
                     <span className="font-semibold">Agency:</span> {originAssistance.label}
@@ -722,11 +747,11 @@ const sampleEsim = [
                     </p>
                   )}
                 </>
-              ) : (
+              ) : !destinationEmbassyContact ? (
                 <div className="rounded-lg border border-indigo-200 bg-white/70 px-3 py-2 text-indigo-900">
                   We are still loading your verified consular support details for {originCountry.code}. Please refresh this page in a few seconds.
                 </div>
-              )}
+              ) : null}
               <p>
                 <span className="font-semibold">Destination Embassy/Consular Desk:</span>{" "}
                 {destinationEmbassyContact ? (
