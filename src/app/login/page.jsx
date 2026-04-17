@@ -17,6 +17,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [errors, setErrors] = useState({});
 
@@ -42,6 +43,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     let clientErrors = {};
 
     // Client-side validation for empty fields
@@ -60,6 +62,7 @@ export default function LoginPage() {
     }
 
     setErrors({}); // Clear any previous errors before making the API call
+    setIsSubmitting(true);
     try {
       
 // decide if identifier looks like an email:
@@ -103,6 +106,8 @@ axios.defaults.headers.common["Authorization"] =
         ...normalized.fields,
         non_field_errors: [friendlyMessage],
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,9 +143,15 @@ axios.defaults.headers.common["Authorization"] =
 
         <button
           type="submit"
-          className="w-full rounded-full bg-slate-900 py-3.5 text-sm font-bold uppercase tracking-[0.14em] text-white shadow-md transition hover:bg-slate-800"
+          className="w-full rounded-full bg-slate-900 py-3.5 text-sm font-bold uppercase tracking-[0.14em] text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+          disabled={isSubmitting || loginSuccess}
         >
-          Login
+          <span className="inline-flex items-center justify-center gap-2">
+            {isSubmitting ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
+            ) : null}
+            {isSubmitting ? "Signing in..." : "Login"}
+          </span>
         </button>
       </form>
 

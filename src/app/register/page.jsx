@@ -24,6 +24,7 @@ export default function RegisterPage() {
   });
   const [errors, setErrors] = useState({});
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateUsername = (username) => {
     const messages = [];
@@ -64,6 +65,31 @@ export default function RegisterPage() {
     return messages;
   };
 
+  const getRegistrationBannerMessage = (normalized) => {
+    const usernameError = normalized?.fields?.username?.[0];
+    if (usernameError) {
+      const lower = String(usernameError).toLowerCase();
+      if (lower.includes("already") || lower.includes("taken") || lower.includes("exists")) {
+        return "That username is already in use. Please choose another one.";
+      }
+      return usernameError;
+    }
+
+    const emailError = normalized?.fields?.email?.[0];
+    if (emailError) return emailError;
+
+    const passwordError =
+      normalized?.fields?.password1?.[0] ||
+      normalized?.fields?.password2?.[0];
+    if (passwordError) return passwordError;
+
+    return getFriendlyAuthMessage(
+      null,
+      normalized?.message || "Registration failed.",
+      "register"
+    );
+  };
+
   const handleChange = (e) => {
     const { id, value } = e.target;
     setForm((f) => ({ ...f, [id]: value }));
@@ -97,6 +123,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
   
     // client-side validations…
     let clientErrors = {};
@@ -115,6 +142,7 @@ export default function RegisterPage() {
     }
   
     setErrors({});
+    setIsSubmitting(true);
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/registration/`,
@@ -152,16 +180,14 @@ export default function RegisterPage() {
       setTimeout(() => router.push("/"), 1500);
     } catch (err) {
       const normalized = normalizeAuthError(err, "Registration failed.");
-      const friendlyMessage = getFriendlyAuthMessage(
-        err,
-        normalized.message || "Registration failed.",
-        "register"
-      );
+      const friendlyMessage = getRegistrationBannerMessage(normalized);
       console.error("Registration error payload:", err?.response?.data || err);
       setErrors({
         ...normalized.fields,
         non_field_errors: [friendlyMessage],
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -219,9 +245,18 @@ export default function RegisterPage() {
         <button
           type="submit"
           className="w-full rounded-full bg-slate-900 py-3.5 text-sm font-bold uppercase tracking-[0.14em] text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-          disabled={registrationSuccess}
+          disabled={registrationSuccess || isSubmitting}
         >
-          {registrationSuccess ? "Registered" : "Register"}
+          <span className="inline-flex items-center justify-center gap-2">
+            {isSubmitting ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
+            ) : null}
+            {registrationSuccess
+              ? "Registered"
+              : isSubmitting
+              ? "Creating account..."
+              : "Register"}
+          </span>
         </button>
       </form>
 

@@ -141,18 +141,7 @@ useEffect(() => {
         setShowProfile((v) => !v);
         setMobileMenuOpen(false);
       }}
-      className="
-        w-auto
-        text-center
-        px-4 py-2
-        bg-white/50 backdrop-blur-sm
-        border border-teal-500
-        text-teal-600 text-sm font-semibold tracking-wide
-        rounded-lg
-        hover:bg-cyan-500
-        hover:text-gray-600
-        transition-colors duration-200
-      "
+      className="inline-flex w-auto items-center justify-center rounded-full border border-teal-200 bg-white/80 px-4 py-2 text-sm font-semibold tracking-wide text-slate-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-cyan-200 hover:bg-cyan-50 hover:text-slate-950"
     >
       Profile
     </button>
@@ -160,19 +149,7 @@ useEffect(() => {
     <Link
       href="/login"
       onClick={() => setMobileMenuOpen(false)}
-      className="
-        w-auto
-        text-center
-        py-2 px-4
-        bg-gradient-to-r from-teal-500 to-cyan-500
-        border-1 border-white-600
-        hover:from-teal-600 hover:to-cyan-600
-        text-white text-sm font-bold tracking-wide
-        rounded-lg
-        shadow-md
-        hover:shadow-lg
-        transition-all duration-200
-      "
+      className="inline-flex w-auto items-center justify-center rounded-full bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-teal-600 hover:via-cyan-600 hover:to-sky-600 hover:shadow-cyan-500/30"
     >
       Login
     </Link>
@@ -181,19 +158,7 @@ useEffect(() => {
   <Link
     href="/Onboarding"
     onClick={() => setMobileMenuOpen(false)}
-    className="
-      w-auto text-center
-      py-2 px-4
-      bg-white
-      border-2 border-teal-500
-      hover:bg-teal-50
-      text-teal-600 text-sm font-bold tracking-wide
-      rounded-lg
-      shadow-inner
-      shadow-outer
-      hover:shadow-md
-      transition-all duration-200
-    "
+    className="inline-flex w-auto items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold tracking-wide text-slate-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-slate-50 hover:shadow-md"
   >
     Get Started
   </Link>
@@ -227,17 +192,7 @@ useEffect(() => {
 {isLoggedIn ? (
   <button
     onClick={() => setShowProfile((v) => !v)}
-    className="
-          inline-flex items-center
-          py-2 px-4
-          bg-white/50 backdrop-blur-sm
-          border border-teal-500
-          text-teal-600 text-sm font-semibold tracking-wide
-          rounded-lg
-           hover:bg-cyan-500
-          hover:text-gray-600
-          transition-colors duration-200
-        "
+    className="inline-flex items-center rounded-full border border-teal-200 bg-white/85 px-4 py-2 text-sm font-semibold tracking-wide text-slate-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-slate-950"
   >
     Profile
   </button>
@@ -245,19 +200,7 @@ useEffect(() => {
   <Link
     href="/login"
     onClick={() => setMobileMenuOpen(false)}
-    className="
-      inline-flex items-center
-      py-2 px-4
-      bg-gradient-to-r from-teal-500 to-cyan-500
-      border-1 border-white-600
-      hover:from-teal-600 hover:to-cyan-600
-      text-white text-sm font-bold tracking-wide
-      
-      rounded-lg
-      shadow-md
-      hover:shadow-lg
-      transition-all duration-200
-    "
+    className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-teal-600 hover:via-cyan-600 hover:to-sky-600 hover:shadow-cyan-500/30"
   >
     Login
   </Link>
@@ -265,19 +208,7 @@ useEffect(() => {
 
 <Link
   href="/Onboarding"
-  className="
-    inline-flex items-center
-    py-2 px-4
-    bg-white
-    border-2 border-teal-500
-    hover:bg-teal-50
-    text-teal-600 text-sm font-bold  tracking-wide
-    rounded-lg
-    shadow-inner
-    shadow-outer
-    hover:shadow-md
-    transition-all duration-200
-  "
+  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold tracking-wide text-slate-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-slate-50 hover:shadow-md"
 >
   Get Started
 </Link>

@@ -107,6 +107,10 @@ export function getFriendlyAuthMessage(err, fallbackMessage, context = "generic"
     !lowerMessage ||
     /login failed|registration failed|something went wrong|request failed/.test(lowerMessage);
 
+  if ([500, 502, 503, 504].includes(status) || /<html|server error|internal server error/.test(lowerMessage)) {
+    return "The server is having trouble right now. Please try again in a moment.";
+  }
+
   if (context === "google") {
     if (status === 404 || /no account|not found|does not exist|unknown user|no active account/.test(lowerMessage)) {
       return "No account is linked to this Google sign-in. Create an account first or use a registered Google account.";
