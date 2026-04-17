@@ -90,6 +90,29 @@ html, body, .homepage-scroll {
   transform: scale(1.05);
 }
 
+/* Live travel updates ticker */
+.travel-news-marquee {
+  overflow: hidden;
+}
+
+.travel-news-marquee-track {
+  animation: travel-news-marquee 30s linear infinite;
+}
+
+.travel-news-marquee:hover .travel-news-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes travel-news-marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 /*
 @tailwind utilities;
 @tailwind base; */

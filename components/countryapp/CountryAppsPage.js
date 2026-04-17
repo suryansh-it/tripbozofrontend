@@ -23,7 +23,7 @@ import ScrollNavButtons from "@/components/ScrollNavButtons";
 
 
 
-export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
+export default function CountryAppsPage({ countryCode, apps, countryInfo, travelUpdates = [], travelSignal = {} }) {
   const router = useRouter();
   const { setShow } = useLoader();
   const storageKey = `selectedAppIds_${countryCode}`;
@@ -160,6 +160,8 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
     // track which app card is expanded
   const [expandedId, setExpandedId] = useState(null);
   const [ratingPickerFor, setRatingPickerFor] = useState(null);
+  const tickerItems = travelUpdates.slice(0, 6);
+  const tickerRail = tickerItems.length > 0 ? [...tickerItems, ...tickerItems] : [];
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
     setRatingPickerFor(null);
@@ -578,25 +580,57 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, }) {
       </div>
       <br />
 
-      {/* Selection Methodology */}
+      {/* Live Travel Updates */}
       <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-6 md:px-14 mb-8">
-        <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-5 sm:p-6 shadow-sm">
-          <div className="flex items-start gap-3 sm:gap-4">
-            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md flex-shrink-0">
-              <span className="text-2xl">🎯</span>
+        <div className="rounded-3xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-4 sm:p-5 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md flex-shrink-0">
+              <span className="text-xl">📰</span>
             </div>
-            <div className="min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-indigo-950">How these apps are selected</h3>
-              <p className="mt-1 text-sm sm:text-base text-indigo-800 leading-relaxed">
-                We highlight apps that are useful in {countryInfo.name}, rated well by travelers, actively maintained, privacy-conscious, and relevant to the travel problems people actually face.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2 text-xs sm:text-sm font-semibold">
-                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">4.0+ rating</span>
-                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">Recent updates</span>
-                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">Local relevance</span>
-                <span className="rounded-full bg-white px-3 py-1.5 text-indigo-700 border border-indigo-100">Privacy aware</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-rose-950">Live Travel Updates</h3>
+                <span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-700 border border-rose-100">
+                  {travelSignal.label || "Latest scan"}
+                </span>
               </div>
+              <p className="mt-1 text-xs sm:text-sm text-rose-800 leading-relaxed line-clamp-2">
+                {travelSignal.note || `Latest travel-impacting headlines for ${countryInfo.name}.`}
+              </p>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-rose-100 bg-white/80 px-3 py-2 overflow-hidden">
+            {tickerRail.length > 0 ? (
+              <div className="travel-news-marquee relative overflow-hidden">
+                <div className="travel-news-marquee-track flex w-max items-center gap-3 pr-3">
+                  {tickerRail.map((item, index) => {
+                    const key = `${item.title}-${item.link}-${index}`;
+                    return (
+                      <a
+                        key={key}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group inline-flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-3 py-2 text-xs sm:text-sm text-rose-900 shadow-sm hover:bg-rose-100 hover:border-rose-200 transition whitespace-nowrap max-w-[92vw] sm:max-w-none"
+                        title={item.title}
+                      >
+                        <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700 border border-rose-100">
+                          {item.badge || "Update"}
+                        </span>
+                        <span className="truncate max-w-[60vw] sm:max-w-[22rem] font-medium group-hover:text-rose-700 transition-colors">
+                          {item.title}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs sm:text-sm text-rose-900 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">
+                No major travel-impacting headlines surfaced in the latest scan. We’ll still keep watching for weather alerts, emergencies, and crowd-heavy events.
+              </div>
+            )}
           </div>
         </div>
       </div>
