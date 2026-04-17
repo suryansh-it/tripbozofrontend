@@ -20,6 +20,48 @@ const apiBlob = axios.create({
     responseType: "blob",
   });
 
+export function normalizeAuthError(err, fallbackMessage = "Something went wrong. Please try again.") {
+  const responseData = err?.response?.data;
+
+  if (!responseData) {
+    return {
+      message: err?.message || fallbackMessage,
+      fields: {},
+    };
+  }
+
+  const fields = {};
+  Object.entries(responseData).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      fields[key] = value;
+    } else if (typeof value === "string") {
+      fields[key] = [value];
+    }
+  });
+
+  const detail =
+    responseData.detail ||
+    responseData.non_field_errors?.[0] ||
+    responseData.error ||
+    responseData.message ||
+    fallbackMessage;
+
+  return {
+    message: detail,
+    fields,
+  };
+}
+
+function getAuthHeaders() {
+  if (!isBrowser) return {};
+  const token = localStorage.getItem("authToken");
+  if (!token) return {};
+  const isJwt = token.split(".").length === 3;
+  return {
+    Authorization: isJwt ? `Bearer ${token}` : `Token ${token}`,
+  };
+}
+
 /** ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
  * 1) Initialize a new session (stores empty list in Redis, returns session_id)
  */
@@ -28,6 +70,7 @@ export async function initSession() {
     console.info("[TripBozo API] initSession disabled → returning dummy ID");
     return "dummy-session";
   }
+
   try {
     const res = await apiClient.post(`/personalized-list/init-session/`);
     return res.data.session_id;
@@ -125,6 +168,7 @@ export async function searchCountries(query) {
       // Fall through to direct API attempt.
     }
   }
+
   try {
     const res = await apiClient.get(`/homepage/search/`, {
       params: { query },
@@ -317,13 +361,14 @@ export async function downloadAppList(sessionId) {
  * 7) Fetch essentials data for a given country code with improved error handling
  *    GET /country/<countryCode>/essentials/
  */
-  export async function fetchEssentials(countryCode) {
+  export async function fetchEssentials(countryCode, originCountryCode = "") {
     if (!useApi) {
       console.info("[TripBozo API] fetchEssentials disabled → returning dummy data");
       return {
         emergencies: [],
         phrases: [],
         tips: [],
+        embassy_contacts: [],
       };
     }
   
@@ -335,7 +380,9 @@ export async function downloadAppList(sessionId) {
 
     // Race the actual request against the timeout
     const res = await Promise.race([
-      apiClient.get(`/country/${countryCode}/essentials/`),
+      apiClient.get(`/country/${countryCode}/essentials/`, {
+        params: originCountryCode ? { origin_country: originCountryCode } : {},
+      }),
       timeoutPromise
     ]);
 
@@ -343,13 +390,15 @@ export async function downloadAppList(sessionId) {
       emergencies: [],
       phrases: [],
       tips: [],
+      embassy_contacts: [],
     };
     } catch (err) {
       console.warn(`[TripBozo API] Failed to fetch essentials for ${countryCode}:`, err.message);
 
       // Fallback for local development when browser CORS blocks direct API calls.
       try {
-        const proxyRes = await fetch(`/api/essentials/${countryCode}/`, {
+        const query = originCountryCode ? `?origin_country=${encodeURIComponent(originCountryCode)}` : "";
+        const proxyRes = await fetch(`/api/essentials/${countryCode}/${query}`, {
           method: "GET",
           headers: { Accept: "application/json" },
           cache: "no-store",
@@ -357,7 +406,7 @@ export async function downloadAppList(sessionId) {
 
         if (proxyRes.ok) {
           const proxyJson = await proxyRes.json();
-          return proxyJson || { emergencies: [], phrases: [], tips: [] };
+          return proxyJson || { emergencies: [], phrases: [], tips: [], embassy_contacts: [] };
         }
       } catch (proxyErr) {
         console.warn(`[TripBozo API] Proxy fallback also failed for ${countryCode}:`, proxyErr.message);
@@ -368,6 +417,35 @@ export async function downloadAppList(sessionId) {
         emergencies: [],
         phrases: [],
         tips: [],
+        embassy_contacts: [],
       };
     }
   }
+
+export async function fetchUserOriginCountryPreference() {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return null;
+
+  try {
+    const res = await apiClient.get(`/auth/user/origin-country/`, { headers });
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateUserOriginCountryPreference(originCountryCode = "") {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return null;
+
+  try {
+    const res = await apiClient.put(
+      `/auth/user/origin-country/`,
+      { origin_country_code: originCountryCode || "" },
+      { headers }
+    );
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}

@@ -15,52 +15,19 @@ export default function EssentialsPage() {
   const { setShow } = useLoader();
 
   const [countryName, setCountryName] = useState("");
-  const [data, setData] = useState({ emergencies: [], phrases: [], tips: [] });
+  const [data, setData] = useState({
+    emergencies: [],
+    phrases: [],
+    tips: [],
+    embassyContacts: [],
+    originAssistance: null,
+  });
   const [loading, setLoading] = useState(true);
   const [speakingKey, setSpeakingKey] = useState(null);
   const [originCountry, setOriginCountry] = useState(null);
   const [voices, setVoices] = useState([]);
   const audioRef = useRef(null);
   const translateCacheRef = useRef(new Map());
-
-  const ORIGIN_ASSISTANCE = {
-    US: {
-      label: "U.S. Department of State",
-      emergencyPhone: "+1-888-407-4747",
-      emergencyPhoneIntl: "+1-202-501-4444",
-      consularAddress: "2201 C St NW, Washington, DC 20520, USA",
-      website: "https://travel.state.gov/content/travel/en/international-travel/emergencies.html",
-      missionFinder: "https://www.usembassy.gov/",
-    },
-    IN: {
-      label: "India Ministry of External Affairs",
-      emergencyPhone: "+91-11-23012113",
-      consularAddress: "South Block, Raisina Hill, New Delhi 110011, India",
-      website: "https://www.mea.gov.in/consular-services.htm",
-      missionFinder: "https://www.mea.gov.in/indian-missions-abroad-new.htm",
-    },
-    GB: {
-      label: "UK Foreign, Commonwealth & Development Office",
-      emergencyPhone: "+44-20-7008-5000",
-      consularAddress: "King Charles St, London SW1A 2AH, United Kingdom",
-      website: "https://www.gov.uk/guidance/get-help-if-youre-abroad",
-      missionFinder: "https://www.gov.uk/world/embassies",
-    },
-    AU: {
-      label: "Australian Consular Services",
-      emergencyPhone: "+61-2-6261-3305",
-      consularAddress: "R.G. Casey Building, John McEwen Cres, Barton ACT 0221, Australia",
-      website: "https://www.smartraveller.gov.au/consular-services",
-      missionFinder: "https://www.smartraveller.gov.au/consular-services/where-get-consular-assistance",
-    },
-    CA: {
-      label: "Global Affairs Canada",
-      emergencyPhone: "+1-613-996-8885",
-      consularAddress: "125 Sussex Dr, Ottawa, ON K1A 0G2, Canada",
-      website: "https://travel.gc.ca/assistance/emergency-assistance",
-      missionFinder: "https://travel.gc.ca/assistance/embassies-consulates",
-    },
-  };
 
   const COUNTRY_NAME_BY_CODE = {
     AE: "United Arab Emirates",
@@ -146,19 +113,22 @@ export default function EssentialsPage() {
 
   // Fetch the essentials, but DO NOT touch the loader here
   useEffect(() => {
-    fetchEssentials(country.toUpperCase())
+    const originCode = originCountry?.code || "";
+    fetchEssentials(country.toUpperCase(), originCode)
       .then((json) => {
         setData({
-          emergencies: json.emergencies.length ? json.emergencies : [],
-          phrases: json.phrases.length ? json.phrases : [],
-          tips: json.tips.length ? json.tips : [],
+          emergencies: Array.isArray(json?.emergencies) ? json.emergencies : [],
+          phrases: Array.isArray(json?.phrases) ? json.phrases : [],
+          tips: Array.isArray(json?.tips) ? json.tips : [],
+          embassyContacts: Array.isArray(json?.embassy_contacts) ? json.embassy_contacts : [],
+          originAssistance: json?.origin_assistance || null,
         });
       })
       .catch(() => {
         // on error, set your fallback
       })
       .finally(() => setLoading(false));
-  }, [country]);
+  }, [country, originCountry?.code]);
 
   useEffect(() => {
     try {
@@ -216,7 +186,7 @@ export default function EssentialsPage() {
     };
   }, []);
 
-  const { emergencies, phrases, tips } = data;
+  const { emergencies, phrases, tips, embassyContacts } = data;
   const destinationCode = country?.toUpperCase();
   const utility = COUNTRY_UTILITY[destinationCode] || {
     transit: "Check official local transit apps for routes and ticketing.",
@@ -226,9 +196,28 @@ export default function EssentialsPage() {
     scams: "Use official transport and avoid unsolicited offers.",
     emergency: "Know local emergency numbers before you travel.",
   };
-  const destinationEmbassyContact = emergencies.find((entry) =>
-    /(embassy|consulate|foreign|diplomatic)/i.test(entry?.name || "")
-  );
+  const destinationEmbassyContact = React.useMemo(() => {
+    if (!originCountry?.code || !Array.isArray(embassyContacts) || embassyContacts.length === 0) {
+      return null;
+    }
+
+    const originCode = originCountry.code.toUpperCase();
+    const originName = String(originCountry.name || COUNTRY_NAME_BY_CODE[originCode] || "").toLowerCase();
+    const originKey = originName.replace(/[^a-z]/g, "");
+
+    const matched = embassyContacts.find((entry) => {
+      const source = `${entry?.origin_country || ""} ${entry?.name || ""}`.toLowerCase();
+      const sourceKey = source.replace(/[^a-z]/g, "");
+      if (!originKey) return false;
+      return source.includes(originName) || sourceKey.includes(originKey);
+    });
+
+    if (matched) return matched;
+
+    return embassyContacts.find((entry) =>
+      /(embassy|consulate|foreign|diplomatic)/i.test(entry?.name || "")
+    ) || null;
+  }, [embassyContacts, originCountry, COUNTRY_NAME_BY_CODE]);
   const emergencyGuidelines = [
     "Call local emergency services first if there is immediate danger.",
     "Contact your embassy/consulate and request consular support.",
@@ -236,19 +225,7 @@ export default function EssentialsPage() {
     "Share your location and emergency contact with a trusted person.",
   ];
 
-  const originAssistance = React.useMemo(() => {
-    if (!originCountry?.code) return null;
-    const exact = ORIGIN_ASSISTANCE[originCountry.code];
-    if (exact) return exact;
-
-    return {
-      label: `${originCountry.name} Foreign Affairs Support`,
-      emergencyPhone: "Use your official foreign affairs portal",
-      consularAddress: "Official central office address not listed in Tripbozo yet.",
-      website: "",
-      missionFinder: "",
-    };
-  }, [originCountry, countryName, country]);
+  const originAssistance = data.originAssistance;
 
 // Sample fallbacks
 const sampleInsurance = [
@@ -408,13 +385,16 @@ const sampleEsim = [
         `Origin Country: ${originCountry.name} (${originCountry.code})`,
         `Destination: ${countryName || cc}`,
         `Agency: ${originAssistance.label}`,
-        `24/7 Emergency: ${originAssistance.emergencyPhone}`,
-        ...(originAssistance.emergencyPhoneIntl ? [`International Emergency: ${originAssistance.emergencyPhoneIntl}`] : []),
-        `Consular Address: ${originAssistance.consularAddress || "Not listed"}`,
+        `24/7 Emergency: ${originAssistance.emergency_phone || "Not available"}`,
+        ...(originAssistance.emergency_phone_intl ? [`International Emergency: ${originAssistance.emergency_phone_intl}`] : []),
+        `Consular Address: ${originAssistance.consular_address || "Not listed"}`,
         ...(originAssistance.website ? [`Emergency Help: ${originAssistance.website}`] : []),
-        ...(originAssistance.missionFinder ? [`Embassy/Consulate Finder: ${originAssistance.missionFinder}`] : []),
+        ...(originAssistance.mission_finder ? [`Embassy/Consulate Finder: ${originAssistance.mission_finder}`] : []),
         ...(destinationEmbassyContact
-          ? [`Destination Embassy/Consular Desk (${destinationEmbassyContact.name}): ${destinationEmbassyContact.phone}`]
+          ? [
+              `Destination Embassy/Consular Desk (${destinationEmbassyContact.name}): ${destinationEmbassyContact.phone || "Phone not listed"}`,
+              ...(destinationEmbassyContact.address ? [`Destination Embassy Address: ${destinationEmbassyContact.address}`] : []),
+            ]
           : ["Destination Embassy/Consular Desk: Not listed"]),
         "",
         "Emergency Guidelines:",
@@ -690,46 +670,67 @@ const sampleEsim = [
               <p>
                 Traveling from <strong>{originCountry.name}</strong> to <strong>{countryName}</strong>. Contact your consular support team:
               </p>
-              <p>
-                <span className="font-semibold">Agency:</span> {originAssistance.label}
-              </p>
-              <p>
-                <span className="font-semibold">24/7 Emergency:</span>{" "}
-                {originAssistance.emergencyPhone.startsWith("+") ? (
-                  <a href={`tel:${originAssistance.emergencyPhone}`} className="underline font-semibold hover:text-indigo-700">
-                    {originAssistance.emergencyPhone}
-                  </a>
-                ) : (
-                  <span>
-                    {originAssistance.emergencyPhone}
-                  </span>
-                )}
-              </p>
-              {originAssistance.emergencyPhoneIntl && (
-                <p>
-                  <span className="font-semibold">International Emergency:</span>{" "}
-                  <a href={`tel:${originAssistance.emergencyPhoneIntl}`} className="underline font-semibold hover:text-indigo-700">
-                    {originAssistance.emergencyPhoneIntl}
-                  </a>
-                </p>
-              )}
-              {originAssistance.consularAddress && (
-                <p>
-                  <span className="font-semibold">Consular Office Address:</span> {originAssistance.consularAddress}
-                </p>
+              {originAssistance ? (
+                <>
+                  <p>
+                    <span className="font-semibold">Agency:</span> {originAssistance.label}
+                  </p>
+                  <p>
+                    <span className="font-semibold">24/7 Emergency:</span>{" "}
+                    {String(originAssistance.emergency_phone || "").startsWith("+") ? (
+                      <a href={`tel:${originAssistance.emergency_phone}`} className="underline font-semibold hover:text-indigo-700">
+                        {originAssistance.emergency_phone}
+                      </a>
+                    ) : (
+                      <span>{originAssistance.emergency_phone || "Not available"}</span>
+                    )}
+                  </p>
+                  {originAssistance.emergency_phone_intl && (
+                    <p>
+                      <span className="font-semibold">International Emergency:</span>{" "}
+                      <a href={`tel:${originAssistance.emergency_phone_intl}`} className="underline font-semibold hover:text-indigo-700">
+                        {originAssistance.emergency_phone_intl}
+                      </a>
+                    </p>
+                  )}
+                  {originAssistance.consular_address && (
+                    <p>
+                      <span className="font-semibold">Consular Office Address:</span> {originAssistance.consular_address}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-lg border border-indigo-200 bg-white/70 px-3 py-2 text-indigo-900">
+                  Verified consular profile is not cached yet for {originCountry.code}. Open this page again in a moment to retry auto-fetch.
+                </div>
               )}
               <p>
                 <span className="font-semibold">Destination Embassy/Consular Desk:</span>{" "}
                 {destinationEmbassyContact ? (
-                  <a href={`tel:${destinationEmbassyContact.phone}`} className="underline font-semibold hover:text-indigo-700">
-                    {destinationEmbassyContact.name}: {destinationEmbassyContact.phone}
-                  </a>
+                  <span>
+                    <span className="font-semibold">{destinationEmbassyContact.name}</span>
+                    {destinationEmbassyContact.phone ? (
+                      <>
+                        {": "}
+                        <a href={`tel:${destinationEmbassyContact.phone}`} className="underline font-semibold hover:text-indigo-700">
+                          {destinationEmbassyContact.phone}
+                        </a>
+                      </>
+                    ) : (
+                      <span>{": Phone not listed"}</span>
+                    )}
+                  </span>
                 ) : (
                   <span>Not listed</span>
                 )}
               </p>
+              {destinationEmbassyContact?.address && (
+                <p>
+                  <span className="font-semibold">Destination Embassy Address:</span> {destinationEmbassyContact.address}
+                </p>
+              )}
               <div className="flex flex-wrap gap-3 pt-1">
-                {originAssistance.website && (
+                {originAssistance?.website && (
                   <a
                     href={originAssistance.website}
                     target="_blank"
@@ -739,9 +740,9 @@ const sampleEsim = [
                     Emergency Help Guide
                   </a>
                 )}
-                {originAssistance.missionFinder && (
+                {originAssistance?.mission_finder && (
                   <a
-                    href={originAssistance.missionFinder}
+                    href={originAssistance.mission_finder}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded-lg bg-white border border-indigo-200 px-4 py-2 text-indigo-800 font-semibold hover:bg-indigo-100 transition"

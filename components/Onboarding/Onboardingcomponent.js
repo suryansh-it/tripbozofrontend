@@ -1,8 +1,12 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLoader } from '@/components/LoaderContext';
+import {
+  fetchUserOriginCountryPreference,
+  updateUserOriginCountryPreference,
+} from '@/src/utils/api';
 
 export default function Onboarding() {
   const router = useRouter();
@@ -11,6 +15,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [selectedOrigin, setSelectedOrigin] = useState(null);
   const [originQuery, setOriginQuery] = useState('');
+  const [isSavingOrigin, setIsSavingOrigin] = useState(false);
 
   const originOptions = [
     { code: 'AE', name: 'United Arab Emirates' },
@@ -54,13 +59,47 @@ export default function Onboarding() {
     );
   }, [originQuery]);
 
-  const handleFinishOnboarding = () => {
+  useEffect(() => {
+    let mounted = true;
+
+    const hydrateOrigin = async () => {
+      try {
+        const raw = localStorage.getItem('tripbozo_origin_country');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.code && parsed?.name && mounted) {
+            setSelectedOrigin({ code: String(parsed.code).toUpperCase(), name: parsed.name });
+          }
+        }
+      } catch {
+        // Ignore malformed local storage values.
+      }
+
+      const remote = await fetchUserOriginCountryPreference();
+      const remoteCountry = remote?.origin_country;
+      if (!mounted || !remoteCountry?.code || !remoteCountry?.name) return;
+
+      const normalized = { code: String(remoteCountry.code).toUpperCase(), name: remoteCountry.name };
+      setSelectedOrigin(normalized);
+      localStorage.setItem('tripbozo_origin_country', JSON.stringify(normalized));
+    };
+
+    hydrateOrigin();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleFinishOnboarding = async () => {
     if (!selectedOrigin) {
       alert('Please select your origin country first!');
       return;
     }
 
+    setIsSavingOrigin(true);
     localStorage.setItem('tripbozo_origin_country', JSON.stringify(selectedOrigin));
+
+    await updateUserOriginCountryPreference(selectedOrigin.code);
 
     setShow(true);
     router.push('/');
@@ -176,9 +215,10 @@ export default function Onboarding() {
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={handleFinishOnboarding}
+                disabled={isSavingOrigin}
                 className="px-8 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-semibold shadow-lg transition"
               >
-                Save and Continue
+                {isSavingOrigin ? 'Saving...' : 'Save and Continue'}
               </button>
               <button
                 onClick={() => {

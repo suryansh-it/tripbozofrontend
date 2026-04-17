@@ -5,7 +5,12 @@ import React, { useState } from 'react';
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import GoogleLoginBtn from "@/components/googlelogin";
-// import FacebookLoginBtn from "@/components/fblogin";
+import AuthShell from "@/components/auth/AuthShell";
+import AuthTextField from "@/components/auth/AuthTextField";
+import AuthPasswordField from "@/components/auth/AuthPasswordField";
+import AuthDivider from "@/components/auth/AuthDivider";
+import AuthSuccessToast from "@/components/auth/AuthSuccessToast";
+import { normalizeAuthError } from "@/src/utils/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -146,199 +151,86 @@ export default function RegisterPage() {
       setRegistrationSuccess(true);
       setTimeout(() => router.push("/"), 1500);
     } catch (err) {
-      console.error("Registration error payload:", err.response?.data);
-      setErrors(err.response?.data || { non_field_errors: ["Registration failed."] });
+      const normalized = normalizeAuthError(err, "Registration failed.");
+      console.error("Registration error payload:", err?.response?.data || err);
+      setErrors({
+        ...normalized.fields,
+        non_field_errors: [normalized.message],
+      });
     }
   };
 
   return (
-    <div className="relative w-full min-h-screen flex items-center justify-center px-4">
-      {/* full‐screen gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-blue-900/80 via-blue-900/40 to-teal-400/20 pointer-events-none" />
+    <AuthShell title="Create Account" subtitle="Join tripbozo and start building smarter trips">
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        {errors.non_field_errors && (
+          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {errors.non_field_errors.join(" ")}
+          </p>
+        )}
 
-      {/* glassy card */}
-      <div className="relative z-10 w-full max-w-md bg-white/70 backdrop-blur-md rounded-2xl shadow-xl p-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2 text-center">
-          Register
-        </h1>
-        <p className="text-gray-700 mb-6 text-center">
-          Create your tripbozo account
-        </p>
+        <AuthTextField
+          id="username"
+          label="Username"
+          type="text"
+          value={form.username}
+          onChange={handleChange}
+          errors={errors.username || []}
+          required
+        />
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          {errors.non_field_errors && (
-            <p className="text-red-500 text-sm">{errors.non_field_errors.join(" ")}</p>
-          )}
+        <AuthTextField
+          id="email"
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          errors={errors.email || []}
+          required
+        />
 
-          {/* Username */}
-          <div>
-            <label htmlFor="username" className="block text-gray-800 mb-1">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={form.username}
-              onChange={handleChange}
-              // --- UI/UX Improvement: Text, Background, Shadow ---
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-400 bg-white text-gray-900 shadow-sm"
-              required
-            />
-            {errors.username && (
-              <ul className="text-red-500 text-sm mt-1 list-disc list-inside">
-                {errors.username.map((msg, index) => (
-                  <li key={index}>{msg}</li>
-                ))}
-              </ul>
-            )}
-          </div>
+        <AuthPasswordField
+          id="password1"
+          label="Password"
+          value={form.password1}
+          onChange={handleChange}
+          show={showPass1}
+          onToggle={() => setShowPass1((v) => !v)}
+          errors={errors.password1 || []}
+          required
+        />
 
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-gray-800 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              // --- UI/UX Improvement: Text, Background, Shadow ---
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-400 bg-white text-gray-900 shadow-sm"
-              required
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.email.join(" ")}
-              </p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div>
-            <label htmlFor="password1" className="block text-gray-800 mb-1">
-              Password
-            </label>
-            <div className="flex w-full">
-              <input
-                id="password1"
-                type={showPass1 ? "text" : "password"}
-                value={form.password1}
-                onChange={handleChange}
-                // --- UI/UX Improvement: Text, Background, Shadow ---
-                className="flex-grow px-4 py-3 rounded-l-lg border border-gray-300 focus:ring-2 focus:ring-teal-400 bg-white text-gray-900 shadow-sm"
-                placeholder="••••••••"
-                required
-              />
-              <button
-                type="button"
-                // --- UI/UX Improvement: Match Background and Shadow ---
-                className="px-3 py-3 rounded-r-lg border border-l-0 border-gray-300 text-sm text-teal-600 hover:text-teal-800 focus:outline-none bg-white shadow-sm"
-                onClick={() => setShowPass1(v => !v)}
-                aria-label={showPass1 ? "Hide password" : "Show password"}
-              >
-                {showPass1 ? "Hide" : "Show"}
-              </button>
-            </div>
-            {errors.password1 && (
-              <ul className="text-red-500 text-sm mt-1 list-disc list-inside">
-                {errors.password1.map((msg, index) => (
-                  <li key={index}>{msg}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label htmlFor="password2" className="block text-gray-800 mb-1">
-              Confirm Password
-            </label>
-            <div className="flex w-full">
-              <input
-                id="password2"
-                type={showPass2 ? "text" : "password"}
-                value={form.password2}
-                onChange={handleChange}
-                // --- UI/UX Improvement: Text, Background, Shadow ---
-                className="flex-grow px-4 py-3 rounded-l-lg border border-gray-300 focus:ring-2 focus:ring-teal-400 bg-white text-gray-900 shadow-sm"
-                placeholder="••••••••"
-                required
-              />
-              <button
-                type="button"
-                // --- UI/UX Improvement: Match Background and Shadow ---
-                className="px-3 py-3 rounded-r-lg border border-l-0 border-gray-300 text-sm text-teal-600 hover:text-teal-800 focus:outline-none bg-white shadow-sm"
-                onClick={() => setShowPass2(v => !v)}
-                aria-label={showPass2 ? "Hide password" : "Show password"}
-              >
-                {showPass2 ? "Hide" : "Show"}
-              </button>
-            </div>
-            {errors.password2 && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.password2.join(" ")}
-              </p>
-            )}
-          </div>
-
-           {/* Submit */}
-           <button
-            type="submit"
-            className="w-full py-3 rounded-full bg-teal-500 text-white font-bold text-lg shadow-md hover:bg-teal-600 transition"
-            disabled={registrationSuccess}
-          >
-            {registrationSuccess ? "✓ Registered" : "Register"}
-          </button>
-        </form>
-
- {/* ── OR Separator ── */}
-       {/* <div className="my-6 flex items-center">
-         <hr className="flex-grow border-gray-300" />
-         <span className="px-2 text-gray-500">or</span>
-         <hr className="flex-grow border-gray-300" />
-       </div> */}
-
-       {/* Google OAuth Button */}
-       {/* <GoogleLoginBtn
-                className="
-                  w-full
-                  px-4 py-2
-                  rounded-lg
-                  bg-white
-                  border border-gray-200
-                  text-gray-700 text-sm
-                  font-medium
-                  flex items-center justify-center space-x-2
-                  shadow-sm
-                  hover:bg-gray-50
-                  transition
-                "
-              /> */}
+        <AuthPasswordField
+          id="password2"
+          label="Confirm Password"
+          value={form.password2}
+          onChange={handleChange}
+          show={showPass2}
+          onToggle={() => setShowPass2((v) => !v)}
+          errors={errors.password2 || []}
+          required
+        />
 
         <button
-          className="mt-4 w-full text-center text-sm text-teal-600 hover:underline"
-          onClick={() => router.push("/login")}
+          type="submit"
+          className="w-full rounded-full bg-slate-900 py-3.5 text-sm font-bold uppercase tracking-[0.14em] text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+          disabled={registrationSuccess}
         >
-          Already have an account? Login
+          {registrationSuccess ? "Registered" : "Register"}
         </button>
-      </div>
+      </form>
 
-      {/* success toast */}
-      {registrationSuccess && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white rounded-full px-6 py-3 shadow-lg flex items-center space-x-2">
-          <svg
-            className="w-6 h-6 text-teal-500"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="text-gray-800 font-medium">Registration successful!</span>
-        </div>
-      )}
-    </div>
+      <AuthDivider text="or continue with" />
+      <GoogleLoginBtn text="signup_with" />
+
+      <button
+        className="mt-3 w-full text-center text-sm font-semibold text-slate-600 transition hover:text-slate-900"
+        onClick={() => router.push("/login")}
+      >
+        Already have an account? Login
+      </button>
+
+      {registrationSuccess && <AuthSuccessToast message="Registration successful" />}
+    </AuthShell>
   );
 }

@@ -97,6 +97,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
 
+  const googleClientId = String(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "")
+    .trim()
+    .replace(
+      ".apps.googleusercontent.com.apps.googleusercontent.com",
+      ".apps.googleusercontent.com"
+    );
+
 
   return (
     <html lang="en">
@@ -126,7 +133,7 @@ export default function RootLayout({ children }) {
 
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}>
-      <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+      <GoogleOAuthProvider clientId={googleClientId}>
         <LoaderProvider>
           {/* this listens and hides the loader on every route-change */}
           <LoaderRouteListener />
