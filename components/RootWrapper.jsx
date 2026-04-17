@@ -32,7 +32,7 @@ export default function RootWrapper({ children }) {
         className={
           isBundle
             ? "min-h-screen"
-            : "min-h-[calc(100vh-64px-200px)] pb-32"
+            : "min-h-[calc(100vh-64px-200px)] pb-0"
         }
       >
         {children}

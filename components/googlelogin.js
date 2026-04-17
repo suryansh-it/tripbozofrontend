@@ -3,6 +3,7 @@ import React from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { getFriendlyAuthMessage } from "@/src/utils/api";
 
 export default function GoogleLoginBtn({ text = "continue_with", useOneTap = false }) {
   const router = useRouter();
@@ -29,12 +30,11 @@ export default function GoogleLoginBtn({ text = "continue_with", useOneTap = fal
         localStorage.setItem("authToken", res.data.key);
         router.push("/");
       } catch (error) {
-        const apiDetail =
-          error?.response?.data?.detail ||
-          error?.response?.data?.non_field_errors?.[0] ||
-          error?.response?.data?.error ||
-          error?.message ||
-          "Google login failed";
+        const apiDetail = getFriendlyAuthMessage(
+          error,
+          "Google login failed. Please try again.",
+          "google"
+        );
         console.error("Google login failed", error?.response?.data || error);
         setErrorMessage(apiDetail);
       } finally {

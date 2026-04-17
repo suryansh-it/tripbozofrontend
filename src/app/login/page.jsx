@@ -10,7 +10,7 @@ import AuthTextField from "@/components/auth/AuthTextField";
 import AuthPasswordField from "@/components/auth/AuthPasswordField";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthSuccessToast from "@/components/auth/AuthSuccessToast";
-import { normalizeAuthError } from "@/src/utils/api";
+import { getFriendlyAuthMessage, normalizeAuthError } from "@/src/utils/api";
 
 
 export default function LoginPage() {
@@ -91,9 +91,11 @@ axios.defaults.headers.common["Authorization"] =
      }, 1500);
     } catch (err) {
       const normalized = normalizeAuthError(err, "Login failed. Please try again.");
-      const friendlyMessage = /no active account|incorrect/i.test(normalized.message)
-        ? "Wrong email/username or password."
-        : normalized.message;
+      const friendlyMessage = getFriendlyAuthMessage(
+        err,
+        normalized.message || "Login failed. Please try again.",
+        "login"
+      );
 
       console.error("Login error:", err?.response?.data || err);
       setErrors({

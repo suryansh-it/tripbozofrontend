@@ -22,10 +22,55 @@ const apiBlob = axios.create({
 
 export function normalizeAuthError(err, fallbackMessage = "Something went wrong. Please try again.") {
   const responseData = err?.response?.data;
+  const status = err?.response?.status;
+
+  const statusMessage = (() => {
+    switch (status) {
+      case 400:
+        return "Please check the details you entered.";
+      case 401:
+        return "Wrong email, username, or password.";
+      case 403:
+        return "You are not allowed to sign in with that account.";
+      case 404:
+        return "We could not find an account for those details. Create one first.";
+      case 408:
+        return "The request timed out. Please try again.";
+      case 409:
+        return "An account with those details already exists.";
+      case 422:
+        return "Please review the highlighted fields and try again.";
+      case 429:
+        return "Too many attempts. Please wait a moment and try again.";
+      case 500:
+      case 502:
+      case 503:
+      case 504:
+        return "The server is having trouble right now. Please try again shortly.";
+      default:
+        return fallbackMessage;
+    }
+  })();
+
+  const rawMessage =
+    typeof responseData === "string"
+      ? responseData
+      : responseData?.detail ||
+        responseData?.non_field_errors?.[0] ||
+        responseData?.error ||
+        responseData?.message ||
+        statusMessage;
+
+  const normalizedMessage =
+    typeof rawMessage === "string"
+      ? rawMessage
+          .replace(/^Request failed with status code\s+\d+\.?\s*/i, "")
+          .trim()
+      : statusMessage;
 
   if (!responseData) {
     return {
-      message: err?.message || fallbackMessage,
+      message: normalizedMessage || err?.message || fallbackMessage,
       fields: {},
     };
   }
@@ -40,6 +85,7 @@ export function normalizeAuthError(err, fallbackMessage = "Something went wrong.
   });
 
   const detail =
+    normalizedMessage ||
     responseData.detail ||
     responseData.non_field_errors?.[0] ||
     responseData.error ||
@@ -50,6 +96,41 @@ export function normalizeAuthError(err, fallbackMessage = "Something went wrong.
     message: detail,
     fields,
   };
+}
+
+export function getFriendlyAuthMessage(err, fallbackMessage, context = "generic") {
+  const normalized = normalizeAuthError(err, fallbackMessage);
+  const status = err?.response?.status;
+  const message = normalized.message || fallbackMessage;
+  const lowerMessage = String(message).toLowerCase();
+
+  if (context === "google") {
+    if (status === 404 || /no account|not found|does not exist|unknown user|no active account/.test(lowerMessage)) {
+      return "No account is linked to this Google sign-in. Create an account first or use a registered Google account.";
+    }
+
+    if (status === 401 || /unauthorized|invalid token|token/.test(lowerMessage)) {
+      return "Google sign-in was not accepted. Please try again or use another sign-in method.";
+    }
+  }
+
+  if (context === "login") {
+    if (status === 404 || /no account|not found|does not exist|unknown user|no active account/.test(lowerMessage)) {
+      return "We could not find an account with that email or username. Create one first.";
+    }
+
+    if (status === 401 || /incorrect|invalid|wrong password|authentication failed/.test(lowerMessage)) {
+      return "Wrong email, username, or password.";
+    }
+  }
+
+  if (context === "register") {
+    if (status === 409 || /already exists|already taken|unique/.test(lowerMessage)) {
+      return "An account with those details already exists. Try logging in instead.";
+    }
+  }
+
+  return message;
 }
 
 function getAuthHeaders() {

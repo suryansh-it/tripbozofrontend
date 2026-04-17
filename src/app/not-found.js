@@ -95,7 +95,7 @@ export default function NotFound() {
                     value={formData.country}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     placeholder="Which country are you suggesting?"
                   />
                 </div>
@@ -111,7 +111,7 @@ export default function NotFound() {
                     onChange={handleInputChange}
                     required
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     placeholder="Tell us about the apps travelers need in this country..."
                   />
                 </div>
@@ -126,7 +126,7 @@ export default function NotFound() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     placeholder="Optional - for follow-up questions"
                   />
                 </div>

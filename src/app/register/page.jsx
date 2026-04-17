@@ -10,7 +10,7 @@ import AuthTextField from "@/components/auth/AuthTextField";
 import AuthPasswordField from "@/components/auth/AuthPasswordField";
 import AuthDivider from "@/components/auth/AuthDivider";
 import AuthSuccessToast from "@/components/auth/AuthSuccessToast";
-import { normalizeAuthError } from "@/src/utils/api";
+import { getFriendlyAuthMessage, normalizeAuthError } from "@/src/utils/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -152,10 +152,15 @@ export default function RegisterPage() {
       setTimeout(() => router.push("/"), 1500);
     } catch (err) {
       const normalized = normalizeAuthError(err, "Registration failed.");
+      const friendlyMessage = getFriendlyAuthMessage(
+        err,
+        normalized.message || "Registration failed.",
+        "register"
+      );
       console.error("Registration error payload:", err?.response?.data || err);
       setErrors({
         ...normalized.fields,
-        non_field_errors: [normalized.message],
+        non_field_errors: [friendlyMessage],
       });
     }
   };
