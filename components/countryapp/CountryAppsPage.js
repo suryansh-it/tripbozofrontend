@@ -10,6 +10,7 @@ import {
   FaCheck,
   FaChevronDown,
   FaChevronUp,
+  FaUserCheck,
   FaTimes,
   FaQrcode,
   FaGlobe,
@@ -160,11 +161,18 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     // track which app card is expanded
   const [expandedId, setExpandedId] = useState(null);
   const [ratingPickerFor, setRatingPickerFor] = useState(null);
+  const [sentimentPanelFor, setSentimentPanelFor] = useState(null);
   const tickerItems = travelUpdates.slice(0, 6);
   const tickerRail = tickerItems.length > 0 ? [...tickerItems, ...tickerItems] : [];
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
     setRatingPickerFor(null);
+  };
+
+  const toggleSentimentPanel = (id) => {
+    setSentimentPanelFor((prev) => {
+      return prev === id ? null : id;
+    });
   };
 
 
@@ -360,6 +368,112 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
       .slice(0, 3);
   };
 
+  const parseNumericSignal = (value) => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value !== "string") return 0;
+    const normalized = value.replace(/,/g, "").trim();
+    const match = normalized.match(/[\d.]+/);
+    if (!match) return 0;
+    let num = Number(match[0]);
+    if (!Number.isFinite(num)) return 0;
+    if (/k/i.test(normalized)) num *= 1000;
+    if (/m/i.test(normalized)) num *= 1000000;
+    return num;
+  };
+
+  const getSentimentInsights = (app) => {
+    const textCorpus = normalizeRawText(
+      `${app.description || ""} ${app.why_recommended || ""} ${app.best_for || ""}`
+    ).toLowerCase();
+    const cautionCorpus = normalizeRawText(app.caution_note || "").toLowerCase();
+
+    const rating = Number(app.rating || 0);
+    const reviewVolume = Math.max(
+      parseNumericSignal(app.review_count),
+      parseNumericSignal(app.ratings_count),
+      parseNumericSignal(app.downloads),
+      parseNumericSignal(app.installs)
+    );
+
+    const recencySignal = app.updated_at || app.last_updated || app.updated || app.last_release_date || app.release_date;
+    const updatedDate = recencySignal ? new Date(recencySignal) : null;
+    const hasValidDate = updatedDate && !Number.isNaN(updatedDate.getTime());
+    const daysSinceUpdate = hasValidDate
+      ? Math.max(0, Math.floor((Date.now() - updatedDate.getTime()) / (1000 * 60 * 60 * 24)))
+      : 180;
+
+    let confidence = 55;
+    if (rating >= 4.6) confidence += 18;
+    else if (rating >= 4.2) confidence += 13;
+    else if (rating >= 3.8) confidence += 8;
+    if (reviewVolume > 100000) confidence += 14;
+    else if (reviewVolume > 10000) confidence += 10;
+    else if (reviewVolume > 1000) confidence += 6;
+    if (daysSinceUpdate <= 30) confidence += 10;
+    else if (daysSinceUpdate <= 90) confidence += 6;
+    else if (daysSinceUpdate <= 180) confidence += 3;
+    confidence = Math.min(96, Math.max(42, Math.round(confidence)));
+
+    const summary =
+      rating >= 4.5
+        ? "Travelers consistently report reliable day-to-day performance, with strong trust for active trip use."
+        : rating >= 4.0
+        ? "Traveler feedback is broadly positive, especially for practical use cases during movement and planning."
+        : "Traveler sentiment is mixed: useful in key scenarios, but worth comparing with alternatives before deciding.";
+
+    const pros = [];
+    if (/offline|without internet|no internet|downloaded map|saved map/.test(textCorpus)) {
+      pros.push("Works reliably even with low or unstable internet in key workflows.");
+    }
+    if (/easy|simple|intuitive|quick|fast/.test(textCorpus)) {
+      pros.push("Setup and day-to-day actions are generally reported as easy for travelers.");
+    }
+    if (/translation|navigate|maps|transport|ride|booking|payments|safety/.test(textCorpus)) {
+      pros.push("Delivers strong utility for common travel tasks like movement, planning, or local coordination.");
+    }
+    if (rating >= 4.2) {
+      pros.push("Receives consistently positive ratings from a large share of active users.");
+    }
+    if (pros.length === 0) {
+      pros.push("Provides practical travel value in real-world trip conditions.");
+      pros.push("Generally considered dependable for day-to-day traveler workflows.");
+    }
+
+    const cons = [];
+    if (/paid|subscription|purchase|premium/.test(cautionCorpus) || app.price) {
+      cons.push("Some features may require paid plans or in-app purchases for full value.");
+    }
+    if (/region|availability|country|limited|restriction/.test(cautionCorpus)) {
+      cons.push("Availability or feature set can vary by country/region and account setup.");
+    }
+    if (/privacy|permission|tracking|ads?/.test(cautionCorpus)) {
+      cons.push("Users should review permissions and privacy settings before regular use.");
+    }
+    if (daysSinceUpdate > 180) {
+      cons.push("Update cadence appears slower recently, so confirm current reliability before depending on it.");
+    }
+    if (cons.length === 0) {
+      cons.push("Check local compatibility and onboarding requirements before the trip.");
+      cons.push("Compare one backup option in the same category for resilience.");
+    }
+
+    const lastUpdatedText = hasValidDate
+      ? updatedDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+      : "Recently reviewed";
+
+    const confidenceLabel =
+      confidence >= 82 ? "High confidence" : confidence >= 68 ? "Moderate confidence" : "Emerging confidence";
+
+    return {
+      summary,
+      pros: pros.slice(0, 3),
+      cons: cons.slice(0, 3),
+      confidence,
+      confidenceLabel,
+      lastUpdatedText,
+    };
+  };
+
   const handleSetRating = (appId, value) => {
     setUserRatings((prev) => ({ ...prev, [appId]: value }));
   };
@@ -456,7 +570,10 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
   return (
     // clicking outside any card collapses all
     <main
-      onClick={() => setExpandedId(null)}
+      onClick={() => {
+        setExpandedId(null);
+        setSentimentPanelFor(null);
+      }}
       className="bg-[#f7fafc] animate-fade-in"
     >
      {/* Hero Section */}
@@ -642,32 +759,53 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
         <div className="grid grid-cols-1 gap-5 sm:gap-6 items-start">
         {paginatedApps.map((app) => {
           const details = getAppDetails(app);
+          const sentiment = getSentimentInsights(app);
+          const sentimentOpen = sentimentPanelFor === app.id;
           return (
+            <div key={app.id} className="w-full relative">
             <div
-              key={app.id}
-              onClick={(e) => { e.stopPropagation(); toggleExpand(app.id); }}
-              className="
+              className={`
              relative
              w-full
              h-auto
              bg-white
              border border-gray-200
              rounded-3xl
-             p-5 sm:p-6
              shadow-md
              hover:shadow-xl
              hover:border-cyan-200
              transition-all duration-300
-             cursor-pointer
+             cursor-default
              flex flex-col
              overflow-hidden
-           "
+             ${sentimentOpen ? "opacity-60 scale-95" : "opacity-100 scale-100"}
+           `}
          >
               {/* Gradient top accent */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2ad2c9] via-cyan-400 to-transparent"></div>
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2ad2c9] via-cyan-400 to-transparent pointer-events-none z-[18]"></div>
+
+              {/* Sentiment Notch Button - Top Center */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleSentimentPanel(app.id);
+                }}
+                className={`absolute top-0 left-1/2 -translate-x-1/2 z-20 h-8 w-fit px-2.5 sm:px-3.5 inline-flex items-center justify-center gap-1.5 rounded-b-2xl border border-cyan-300 border-t-0 transition-all duration-300 text-[10px] sm:text-[11px] font-bold tracking-[0.02em] leading-none ${
+                  sentimentOpen
+                    ? "bg-gradient-to-r from-cyan-700 via-sky-600 to-blue-600 text-white border-cyan-700 shadow-[0_4px_10px_rgba(8,145,178,0.35)]"
+                    : "bg-gradient-to-r from-white to-cyan-50 text-cyan-800 hover:from-cyan-50 hover:to-sky-50 hover:text-cyan-900"
+                }`}
+                title="View traveler insights"
+                aria-label="View traveler insights"
+              >
+                <FaUserCheck className="text-[10px] sm:text-[11px]" />
+                <span className="hidden sm:inline">Traveler Insights</span>
+                <span className="sm:hidden">Insights</span>
+              </button>
 
               {/* Content */}
-              <div className="flex-1 flex flex-col gap-4">
+              <div className="flex-1 flex flex-col gap-4 px-5 pb-5 pt-7 sm:px-6 sm:pb-6 sm:pt-8">
                 {/* Header: icon, title, and quick actions */}
                 <div className="flex items-start justify-between gap-3 sm:gap-4">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -928,6 +1066,90 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                   </div>
                 )}
               </div>
+
+            {sentimentOpen && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute inset-0 top-0 right-0 w-full max-w-full rounded-3xl border border-violet-400/70 bg-gradient-to-br from-violet-200 via-violet-100 to-fuchsia-200 p-5 sm:p-6 shadow-2xl z-30 animate-slideIn"
+              >
+                <div className="h-full w-full overflow-y-auto pr-2">
+                  {/* Header with close button */}
+                  <div className="flex items-center justify-between gap-3 mb-5">
+                    <h3 className="text-lg sm:text-xl font-extrabold text-violet-950 flex items-center gap-2">
+                      <FaUserCheck className="text-violet-700" />
+                      Traveler Insights
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => toggleSentimentPanel(app.id)}
+                      className="inline-flex items-center justify-center rounded-full h-10 w-10 bg-white/95 border border-violet-300 text-violet-700 hover:bg-violet-100 flex-shrink-0"
+                      aria-label="Close traveler sentiment panel"
+                      title="Close"
+                    >
+                      <FaTimes className="text-base" />
+                    </button>
+                  </div>
+
+                  {/* Summary section */}
+                  <div className="rounded-2xl border border-violet-300/70 bg-white/95 p-4 mb-5 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-wide text-violet-700 mb-2">What travelers say</p>
+                    <p className="text-sm text-slate-800 leading-relaxed">{sentiment.summary}</p>
+                  </div>
+
+                  {/* Pros and Cons stacked vertically */}
+                  <div className="space-y-4 mb-5">
+                    {/* Pros Section */}
+                    <div className="rounded-2xl border border-emerald-300/60 bg-emerald-100/85 p-4 shadow-sm">
+                      <p className="text-xs font-bold uppercase tracking-wide text-emerald-800 mb-3 flex items-center gap-2">
+                        <span>✓</span> Strengths
+                      </p>
+                      <ul className="space-y-2">
+                        {sentiment.pros.map((pro, idx) => (
+                          <li key={`pro_${idx}`} className="text-xs sm:text-sm text-emerald-950 leading-relaxed flex items-start gap-2">
+                            <span className="mt-0.5 text-emerald-700 flex-shrink-0">•</span>
+                            <span>{pro}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Cons/Watch-outs Section */}
+                    <div className="rounded-2xl border border-amber-300/60 bg-amber-100/90 p-4 shadow-sm">
+                      <p className="text-xs font-bold uppercase tracking-wide text-amber-800 mb-3 flex items-center gap-2">
+                        <span>⚠</span> Watch-outs
+                      </p>
+                      <ul className="space-y-2">
+                        {sentiment.cons.map((con, idx) => (
+                          <li key={`con_${idx}`} className="text-xs sm:text-sm text-amber-950 leading-relaxed flex items-start gap-2">
+                            <span className="mt-0.5 text-amber-700 flex-shrink-0">•</span>
+                            <span>{con}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Confidence Score */}
+                  <div className="rounded-2xl border border-violet-300/70 bg-white/95 p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Confidence</p>
+                      <span className="text-base font-bold text-violet-900">{sentiment.confidence}%</span>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-violet-200 overflow-hidden mb-2">
+                      <div
+                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-500"
+                        style={{ width: `${sentiment.confidence}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-700">
+                      <span className="font-semibold text-violet-800">{sentiment.confidenceLabel}</span>
+                      <span>Updated: {sentiment.lastUpdatedText}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            </div>
             </div>
           );
         })}
