@@ -54,9 +54,16 @@ export default function AboutPageClient() {
       bg: 'bg-yellow-100',
     },
     {
+      icon: '🛰️',
+      title: 'Live Travel Updates',
+      text: 'Stay on top of the latest travel alerts, weather changes, local advisories, and country updates without hunting across multiple sources. The updates are organized into clear categories, so the most useful information rises to the top instead of getting buried in noise. This helps travelers react faster when conditions change and keep their plans realistic.',
+      align: 'left',
+      bg: 'bg-emerald-100',
+    },
+    {
       icon: '🗺️',
       title: 'Country Travel Guide',
-      text: 'Open a destination guide that connects app picks with local travel reality. It shows what matters most for that country, from transport and safety to connectivity and money habits, so the suggestions feel practical instead of generic. This helps users understand not just what to install, but why each recommendation is useful in that specific place.',
+      text: 'Open a destination guide that connects app picks with local travel reality and your selected origin country. It shows what matters most for that country, from transport and safety to connectivity, money habits, and relevant embassy help, so the suggestions feel practical instead of generic. This helps users understand not just what to install, but why each recommendation is useful in that specific place.',
       align: 'left',
       bg: 'bg-blue-100',
     },
@@ -82,7 +89,7 @@ export default function AboutPageClient() {
             url: 'https://tripbozo.com',
             logo: 'https://tripbozo.com/logo.png',
             description:
-              'tripbozo helps travelers discover destination-specific app bundles chosen from traveler feedback and practical selection criteria, plus Essentials guidance and helpful travel tools that make each trip easier to plan and safer to enjoy.',
+              'tripbozo helps travelers discover destination-specific app bundles chosen from traveler feedback and practical selection criteria, plus Essentials guidance, live travel updates, origin-aware assistance, and helpful travel tools that make each trip easier to plan and safer to enjoy.',
             sameAs: [
               'https://twitter.com/tripbozo',
               'https://facebook.com/tripbozo',

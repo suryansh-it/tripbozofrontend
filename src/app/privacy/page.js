@@ -10,7 +10,7 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-extrabold text-gray-900">
           Privacy Policy
         </h1>
-        <p className="text-gray-600 italic">Last updated: June 20, 2025</p>
+        <p className="text-gray-600 italic">Last updated: April 17, 2026</p>
 
         <section className="space-y-4">
           <h2 className="text-xl font-bold text-teal-600">Introduction</h2>
@@ -30,7 +30,9 @@ export default function PrivacyPage() {
           </h3>
           <ul className="list-disc list-inside text-gray-700 space-y-1">
             <li>Email address when you sign up or contact us.</li>
+            <li>Account details from Google or other supported sign-in methods.</li>
             <li>Any information you voluntarily provide via forms.</li>
+            <li>Your selected origin country and travel preferences when you save them.</li>
           </ul>
 
           <h3 className="text-lg font-semibold text-gray-800 mt-4">
@@ -40,6 +42,9 @@ export default function PrivacyPage() {
             <li>
               <strong>Cookies & Local Storage:</strong> Remember preferences and
               session data.
+            </li>
+            <li>
+              <strong>Usage Data:</strong> Pages visited, country searches, app bundle selections, and feature interactions such as live travel updates.
             </li>
             <li>
               <strong>Analytics:</strong> Google Analytics tracks usage,
@@ -62,6 +67,8 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-bold text-teal-600">2. How We Use Your Data</h2>
           <ul className="list-disc list-inside text-gray-700 space-y-1">
             <li>To remember your session and selected apps.</li>
+            <li>To personalize essentials, origin-aware guidance, and country recommendations.</li>
+            <li>To display live travel updates, advisories, and country-specific information.</li>
             <li>To improve site performance and diagnose issues.</li>
             <li>To serve relevant ads via AdSense and measure campaign performance.</li>
           </ul>
@@ -96,8 +103,11 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-bold text-teal-600">4. Data Retention</h2>
           <p className="text-gray-700">
             Session data is stored up to 24 hours in Redis. Analytics data is
-            retained per our provider’s policy. We periodically purge old data
-            to comply with privacy best practices.
+            retained per our provider’s policy. Saved origin-country settings
+            and account preferences are retained until you delete your account
+            or request removal, unless longer retention is required for legal
+            or security reasons. We periodically purge old data to comply with
+            privacy best practices.
           </p>
         </section>
 

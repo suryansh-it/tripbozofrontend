@@ -10,7 +10,7 @@ export default function TermsPage() {
         <h1 className="text-3xl font-extrabold text-gray-900">
           Terms of Service
         </h1>
-        <p className="text-gray-600 italic">Last updated: June 20, 2025</p>
+        <p className="text-gray-600 italic">Last updated: April 17, 2026</p>
 
         <section className="space-y-4">
           <h2 className="text-xl font-bold text-teal-600">Introduction</h2>
@@ -45,6 +45,9 @@ export default function TermsPage() {
               Reverse engineering, scraping of data, or distribution of
               malware is strictly prohibited.
             </li>
+            <li>
+              Live travel updates, advisories, country information, and similar content may change without notice and should be treated as informational, not guaranteed facts.
+            </li>
             <li>We reserve the right to suspend accounts that breach these Terms.</li>
           </ul>
         </section>
@@ -61,16 +64,24 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-4 border-t pt-4">
-          <h2 className="text-xl font-bold text-teal-600">4. Ads & Third‑Party Links</h2>
+          <h2 className="text-xl font-bold text-teal-600">4. Account & Data Use</h2>
           <p className="text-gray-700">
-            Our Site integrates Google AdSense to display advertisements. You
-            may see ads based on your browsing. We also link to third‑party
-            sites; we have no control over their content or privacy practices.
+            When you sign in with email, username, or Google, we may store basic account identifiers and your selected origin country to personalize Essentials, recommendations, and travel guidance. You are responsible for keeping your account secure and for any activity under your account.
           </p>
         </section>
 
         <section className="space-y-4 border-t pt-4">
-          <h2 className="text-xl font-bold text-teal-600">5. Disclaimer of Warranties</h2>
+          <h2 className="text-xl font-bold text-teal-600">5. Ads & Third‑Party Links</h2>
+          <p className="text-gray-700">
+            Our Site integrates Google AdSense to display advertisements. You
+            may see ads based on your browsing. We also link to third‑party
+            sites and use external travel data sources; we have no control over
+            their content, availability, or privacy practices.
+          </p>
+        </section>
+
+        <section className="space-y-4 border-t pt-4">
+          <h2 className="text-xl font-bold text-teal-600">6. Disclaimer of Warranties</h2>
           <p className="text-gray-700">
             The Site and Services are provided “as is” and “as available.” To
             the fullest extent permitted by law, we disclaim all warranties,
@@ -80,7 +91,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-4 border-t pt-4">
-          <h2 className="text-xl font-bold text-teal-600">6. Limitation of Liability</h2>
+          <h2 className="text-xl font-bold text-teal-600">7. Limitation of Liability</h2>
           <p className="text-gray-700">
             tripbozo and its affiliates will not be liable for any indirect,
             incidental, special, or consequential damages arising out of your
@@ -90,7 +101,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-4 border-t pt-4">
-          <h2 className="text-xl font-bold text-teal-600">7. Changes to Terms</h2>
+          <h2 className="text-xl font-bold text-teal-600">8. Changes to Terms</h2>
           <p className="text-gray-700">
             We may modify these Terms at any time. Changes will be posted here
             with an updated “Last updated” date. Continued use after changes
@@ -99,7 +110,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-4 border-t pt-4">
-          <h2 className="text-xl font-bold text-teal-600">8. Governing Law & Disputes</h2>
+          <h2 className="text-xl font-bold text-teal-600">9. Governing Law & Disputes</h2>
           <p className="text-gray-700">
             These Terms are governed by Indian law. Any dispute will be subject
             to the exclusive jurisdiction of the courts in your state or city.
@@ -107,7 +118,7 @@ export default function TermsPage() {
         </section>
 
         <section className="space-y-4 border-t pt-4">
-          <h2 className="text-xl font-bold text-teal-600">9. Contact Us</h2>
+          <h2 className="text-xl font-bold text-teal-600">10. Contact Us</h2>
           <p className="text-gray-700">
             If you have questions about these Terms, please reach out at{" "}
             <a
