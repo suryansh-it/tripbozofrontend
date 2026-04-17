@@ -251,6 +251,7 @@ export async function fetchCountryTravelUpdates(countryCode) {
         return {
           updates: Array.isArray(proxyJson?.updates) ? proxyJson.updates : [],
           signal: proxyJson?.signal || {},
+          weather: proxyJson?.weather || {},
         };
       }
     } catch {
@@ -263,9 +264,10 @@ export async function fetchCountryTravelUpdates(countryCode) {
     return {
       updates: Array.isArray(res?.data?.updates) ? res.data.updates : [],
       signal: res?.data?.signal || {},
+      weather: res?.data?.weather || {},
     };
   } catch {
-    return { updates: [], signal: {} };
+    return { updates: [], signal: {}, weather: {} };
   }
 }
 

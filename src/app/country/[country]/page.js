@@ -20,6 +20,7 @@ export default async function CountryPage({ params }) {
   const travelPayload = await fetchCountryTravelUpdates(countryCode);
   const travelUpdates = Array.isArray(travelPayload?.updates) ? travelPayload.updates : [];
   const travelSignal = travelPayload?.signal || {};
+  const travelWeather = travelPayload?.weather || {};
 
   return (
     <CountryAppsPage
@@ -28,6 +29,7 @@ export default async function CountryPage({ params }) {
       apps={apps}
       travelUpdates={travelUpdates}
       travelSignal={travelSignal}
+      travelWeather={travelWeather}
     />
   );
 }

@@ -11,6 +11,7 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaUserCheck,
+  FaSpinner,
   FaTimes,
   FaQrcode,
   FaGlobe,
@@ -29,7 +30,7 @@ import ScrollNavButtons from "@/components/ScrollNavButtons";
 
 
 
-export default function CountryAppsPage({ countryCode, apps, countryInfo, travelUpdates = [], travelSignal = {} }) {
+export default function CountryAppsPage({ countryCode, apps, countryInfo, travelUpdates = [], travelSignal = {}, travelWeather = {} }) {
   const TRAVEL_POLL_INTERVAL_MS = 12 * 60 * 1000;
   const INSIGHT_CLIENT_FRESH_MS = 6 * 60 * 60 * 1000;
 
@@ -169,14 +170,56 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     // track which app card is expanded
   const [expandedId, setExpandedId] = useState(null);
   const [ratingPickerFor, setRatingPickerFor] = useState(null);
-  const [sentimentPanelFor, setSentimentPanelFor] = useState(null);
+  const [openSentimentPanels, setOpenSentimentPanels] = useState([]);
   const [liveTravelUpdates, setLiveTravelUpdates] = useState(() => travelUpdates || []);
   const [liveTravelSignal, setLiveTravelSignal] = useState(() => travelSignal || {});
+  const [liveTravelWeather, setLiveTravelWeather] = useState(() => travelWeather || {});
+  const [weatherReelIndex, setWeatherReelIndex] = useState(0);
   const [liveInsightsByApp, setLiveInsightsByApp] = useState({});
   const [liveInsightFetchedAt, setLiveInsightFetchedAt] = useState({});
   const [liveInsightLoading, setLiveInsightLoading] = useState({});
   const tickerItems = (liveTravelUpdates || []).slice(0, 6);
   const tickerRail = tickerItems.length > 0 ? [...tickerItems, ...tickerItems] : [];
+  const formatWeatherSlotLabel = (value) => {
+    const text = String(value || "").toLowerCase();
+    if (!text || text.includes("unavailable")) return "weather unavailable";
+    if (text.includes("thunderstorm") || text.includes("storm")) return "storm watch";
+    if (text.includes("rain") || text.includes("drizzle")) return "rainy";
+    if (text.includes("snow")) return "snowy";
+    if (text.includes("fog")) return "foggy";
+    if (text.includes("overcast")) return "overcast";
+    if (text.includes("partly cloudy")) return "partly cloudy";
+    if (text.includes("clear")) return "clear";
+    if (text.includes("very hot") || text.includes("hot")) return "hot";
+    if (text.includes("warm")) return "warm";
+    if (text.includes("mild")) return "mild";
+    if (text.includes("cool")) return "cool";
+    if (text.includes("cold")) return "cold";
+    return text.replace(/\bconditions?\b/g, "").replace(/\s+/g, " ").trim() || "weather";
+  };
+
+  const weatherConditions = useMemo(() => {
+    const list = [];
+    if (Array.isArray(liveTravelWeather?.conditions)) {
+      list.push(...liveTravelWeather.conditions);
+    }
+    if (liveTravelWeather?.condition) {
+      list.push(liveTravelWeather.condition);
+    }
+
+    const deduped = [];
+    const seen = new Set();
+    list.forEach((value) => {
+      const text = formatWeatherSlotLabel(value);
+      const key = text.toLowerCase();
+      if (!text || seen.has(key)) return;
+      seen.add(key);
+      deduped.push(text);
+    });
+
+    return deduped.length ? deduped : ["Weather unavailable"];
+  }, [liveTravelWeather]);
+  const currentWeatherCondition = weatherConditions[weatherReelIndex % weatherConditions.length] || weatherConditions[0];
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
     setRatingPickerFor(null);
@@ -186,13 +229,16 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     if (!app?.id) return;
 
     const appId = app.id;
-    const isClosing = sentimentPanelFor === appId;
+    const isClosing = openSentimentPanels.includes(appId);
     if (isClosing) {
-      setSentimentPanelFor(null);
+      setOpenSentimentPanels((prev) => prev.filter((id) => id !== appId));
       return;
     }
 
-    setSentimentPanelFor(appId);
+    // Keep card height stable while insights are open.
+    setExpandedId(null);
+    setRatingPickerFor(null);
+    setOpenSentimentPanels((prev) => (prev.includes(appId) ? prev : [...prev, appId]));
 
     const lastFetchedAt = liveInsightFetchedAt[appId] || 0;
     const isFresh = lastFetchedAt > 0 && (Date.now() - lastFetchedAt) < INSIGHT_CLIENT_FRESH_MS;
@@ -215,7 +261,21 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
   useEffect(() => {
     setLiveTravelUpdates(Array.isArray(travelUpdates) ? travelUpdates : []);
     setLiveTravelSignal(travelSignal || {});
-  }, [countryCode, travelUpdates, travelSignal]);
+    setLiveTravelWeather(travelWeather || {});
+  }, [countryCode, travelUpdates, travelSignal, travelWeather]);
+
+  useEffect(() => {
+    setWeatherReelIndex(0);
+  }, [weatherConditions.join("|")]);
+
+  useEffect(() => {
+    if (weatherConditions.length <= 1) return;
+    const intervalId = setInterval(() => {
+      setWeatherReelIndex((prev) => (prev + 1) % weatherConditions.length);
+    }, 4200);
+
+    return () => clearInterval(intervalId);
+  }, [weatherConditions]);
 
   useEffect(() => {
     let mounted = true;
@@ -230,8 +290,10 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
         if (!mounted || !payload) return;
         const nextUpdates = Array.isArray(payload.updates) ? payload.updates : [];
         const nextSignal = payload.signal || {};
+        const nextWeather = payload.weather || {};
         setLiveTravelUpdates(nextUpdates);
         setLiveTravelSignal(nextSignal);
+        setLiveTravelWeather(nextWeather);
       } catch {
         // Keep current content on transient failures.
       }
@@ -407,6 +469,32 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     });
 
     return unique;
+  };
+
+  const getTravelUpdateMeta = (item = {}) => {
+    const badge = String(item.badge || "Travel news").toLowerCase();
+    if (badge.includes("weather") || badge.includes("emergency")) {
+      return {
+        label: "Weather",
+        className: "border-sky-200 bg-sky-50 text-sky-700",
+      };
+    }
+    if (badge.includes("festival") || badge.includes("crowd") || badge.includes("event")) {
+      return {
+        label: "Festival",
+        className: "border-amber-200 bg-amber-50 text-amber-800",
+      };
+    }
+    if (badge.includes("alert") || badge.includes("warning") || badge.includes("advisory")) {
+      return {
+        label: "Travel alert",
+        className: "border-rose-200 bg-rose-50 text-rose-700",
+      };
+    }
+    return {
+      label: "Travel news",
+      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    };
   };
 
   const getAppDetails = (app) => {
@@ -657,7 +745,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     <main
       onClick={() => {
         setExpandedId(null);
-        setSentimentPanelFor(null);
+        setOpenSentimentPanels([]);
       }}
       className="bg-[#f7fafc] animate-fade-in"
     >
@@ -785,40 +873,56 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
       {/* Live Travel Updates */}
       <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-6 md:px-14 mb-8">
         <div className="rounded-3xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-amber-50 p-4 sm:p-5 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md flex-shrink-0">
-              <span className="text-xl">📰</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-rose-950">Live Travel Updates</h3>
-                <span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-700 border border-rose-100">
-                  {liveTravelSignal.label || "Latest scan"}
-                </span>
+          <div className="flex items-start justify-between gap-3 sm:gap-4">
+            <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md flex-shrink-0">
+                <span className="text-xl">📰</span>
               </div>
-              <p className="mt-1 text-xs sm:text-sm text-rose-800 leading-relaxed line-clamp-2">
-                {liveTravelSignal.note || `Latest travel-impacting headlines for ${countryInfo.name}.`}
-              </p>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-bold text-rose-950">Live Travel Updates</h3>
+                  <span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-700 border border-rose-100">
+                    {liveTravelSignal.label || "Latest scan"}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs sm:text-sm text-rose-800 leading-relaxed line-clamp-2">
+                  {liveTravelSignal.note || `Latest travel-impacting headlines for ${countryInfo.name}.`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex-shrink-0 w-full max-w-[150px] sm:max-w-[190px] rounded-2xl border border-cyan-200/70 bg-gradient-to-br from-cyan-50/80 via-sky-50/70 to-indigo-50/55 px-2.5 py-2 shadow-[0_10px_26px_rgba(14,116,144,0.08)] backdrop-blur-sm text-right">
+              <div className="flex items-center justify-end gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700">
+                <span>{liveTravelWeather.emoji || "🌤️"}</span>
+                <span className="hidden sm:inline">Country climate</span>
+                <span className="sm:hidden">Climate</span>
+              </div>
+              <div className="mt-2 rounded-xl border border-cyan-200/60 bg-gradient-to-r from-white via-cyan-50/70 to-sky-50/70 px-2 py-1 overflow-hidden">
+                <div key={`weather_reel_${weatherReelIndex}`} className="weather-slot-card">
+                  {currentWeatherCondition}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-rose-100 bg-white/80 px-3 py-2 overflow-hidden">
+          <div className="mt-2.5 pt-2 border-t border-rose-100/80 overflow-hidden">
             {tickerRail.length > 0 ? (
               <div className="travel-news-marquee relative overflow-hidden">
-                <div className="travel-news-marquee-track flex w-max items-center gap-3 pr-3">
+                <div className="travel-news-marquee-track flex w-max items-center gap-2.5 pr-3">
                   {tickerRail.map((item, index) => {
                     const key = `${item.title}-${item.link}-${index}`;
+                    const travelMeta = getTravelUpdateMeta(item);
                     return (
                       <a
                         key={key}
                         href={item.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group inline-flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50 px-3 py-2 text-xs sm:text-sm text-rose-900 shadow-sm hover:bg-rose-100 hover:border-rose-200 transition whitespace-nowrap max-w-[92vw] sm:max-w-none"
+                        className="group inline-flex items-center gap-2 rounded-full border border-rose-100/80 bg-white/80 px-3 py-2 text-xs sm:text-sm text-rose-900 hover:bg-rose-100 hover:border-rose-200 transition whitespace-nowrap max-w-[92vw] sm:max-w-none"
                         title={item.title}
                       >
-                        <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-700 border border-rose-100">
-                          {item.badge || "Update"}
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${travelMeta.className}`}>
+                          {travelMeta.label}
                         </span>
                         <span className="truncate max-w-[60vw] sm:max-w-[22rem] font-medium group-hover:text-rose-700 transition-colors">
                           {item.title}
@@ -829,7 +933,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                 </div>
               </div>
             ) : (
-              <div className="text-xs sm:text-sm text-rose-900 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis">
+              <div className="text-xs sm:text-sm text-rose-900 leading-relaxed whitespace-nowrap overflow-hidden text-ellipsis px-1">
                 No major travel-impacting headlines surfaced in the latest scan. We’ll still keep watching for weather alerts, emergencies, and crowd-heavy events.
               </div>
             )}
@@ -847,7 +951,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
           const fallbackSentiment = getSentimentInsights(app);
           const sentiment = liveInsightsByApp[app.id] || fallbackSentiment;
           const sentimentLoading = !!liveInsightLoading[app.id];
-          const sentimentOpen = sentimentPanelFor === app.id;
+          const sentimentOpen = openSentimentPanels.includes(app.id);
           return (
             <div key={app.id} className="w-full relative">
             <div
@@ -1223,7 +1327,12 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                   <div className="rounded-2xl border border-violet-300/70 bg-white/95 p-4 shadow-sm">
                     <div className="flex items-center justify-between gap-3 mb-3">
                       <p className="text-xs font-bold uppercase tracking-wide text-violet-700">Confidence</p>
-                      <span className="text-base font-bold text-violet-900">{sentiment.confidence}%</span>
+                      <span className="inline-flex items-center gap-2 text-base font-bold text-violet-900">
+                        {sentimentLoading && (
+                          <FaSpinner className="text-xs text-violet-700 animate-spin" aria-hidden="true" />
+                        )}
+                        {sentiment.confidence}%
+                      </span>
                     </div>
                     <div className="h-2.5 rounded-full bg-violet-200 overflow-hidden mb-2">
                       <div
@@ -1241,6 +1350,9 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                           ? `Live review sources: ${sentiment.source.reviewCount || 0} reviews`
                           : "Using metadata fallback (live reviews unavailable)."}
                       </div>
+                    )}
+                    {sentimentLoading && (
+                      <div className="mt-1 text-[11px] text-violet-700">Refreshing live traveler reviews...</div>
                     )}
                   </div>
                 </div>
