@@ -238,6 +238,63 @@ export async function fetchAppsByCountry(countryCode) {
   }
 }
 
+export async function fetchCountryTravelUpdates(countryCode) {
+  if (isBrowser) {
+    try {
+      const proxyRes = await fetch(`/api/proxy/country/${countryCode}/travel-updates/`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (proxyRes.ok) {
+        const proxyJson = await proxyRes.json();
+        return {
+          updates: Array.isArray(proxyJson?.updates) ? proxyJson.updates : [],
+          signal: proxyJson?.signal || {},
+        };
+      }
+    } catch {
+      // Fall through to direct API attempt.
+    }
+  }
+
+  try {
+    const res = await apiClient.get(`/country/${countryCode}/travel-updates/`);
+    return {
+      updates: Array.isArray(res?.data?.updates) ? res.data.updates : [],
+      signal: res?.data?.signal || {},
+    };
+  } catch {
+    return { updates: [], signal: {} };
+  }
+}
+
+export async function fetchTravelerInsight(countryCode, appId) {
+  if (!countryCode || !appId) return null;
+
+  if (isBrowser) {
+    try {
+      const proxyRes = await fetch(`/api/proxy/country/${countryCode}/apps/${appId}/insights/`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (proxyRes.ok) {
+        return await proxyRes.json();
+      }
+    } catch {
+      // Fall through to direct API attempt.
+    }
+  }
+
+  try {
+    const res = await apiClient.get(`/country/${countryCode}/apps/${appId}/insights/`);
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function downloadAppList(sessionId) {
     // GET /personalized-list/download-text/:sessionId/
     const res = await apiBlob.get(

@@ -19,12 +19,20 @@ import {
   FaApple,
   FaGooglePlay,
 } from "react-icons/fa";
-import { initSession, saveSelectedApps } from "@/src/utils/api";
+import {
+  initSession,
+  saveSelectedApps,
+  fetchTravelerInsight,
+  fetchCountryTravelUpdates,
+} from "@/src/utils/api";
 import ScrollNavButtons from "@/components/ScrollNavButtons";
 
 
 
 export default function CountryAppsPage({ countryCode, apps, countryInfo, travelUpdates = [], travelSignal = {} }) {
+  const TRAVEL_POLL_INTERVAL_MS = 12 * 60 * 1000;
+  const INSIGHT_CLIENT_FRESH_MS = 6 * 60 * 60 * 1000;
+
   const router = useRouter();
   const { setShow } = useLoader();
   const storageKey = `selectedAppIds_${countryCode}`;
@@ -162,18 +170,95 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
   const [expandedId, setExpandedId] = useState(null);
   const [ratingPickerFor, setRatingPickerFor] = useState(null);
   const [sentimentPanelFor, setSentimentPanelFor] = useState(null);
-  const tickerItems = travelUpdates.slice(0, 6);
+  const [liveTravelUpdates, setLiveTravelUpdates] = useState(() => travelUpdates || []);
+  const [liveTravelSignal, setLiveTravelSignal] = useState(() => travelSignal || {});
+  const [liveInsightsByApp, setLiveInsightsByApp] = useState({});
+  const [liveInsightFetchedAt, setLiveInsightFetchedAt] = useState({});
+  const [liveInsightLoading, setLiveInsightLoading] = useState({});
+  const tickerItems = (liveTravelUpdates || []).slice(0, 6);
   const tickerRail = tickerItems.length > 0 ? [...tickerItems, ...tickerItems] : [];
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
     setRatingPickerFor(null);
   };
 
-  const toggleSentimentPanel = (id) => {
-    setSentimentPanelFor((prev) => {
-      return prev === id ? null : id;
-    });
+  const toggleSentimentPanel = async (app) => {
+    if (!app?.id) return;
+
+    const appId = app.id;
+    const isClosing = sentimentPanelFor === appId;
+    if (isClosing) {
+      setSentimentPanelFor(null);
+      return;
+    }
+
+    setSentimentPanelFor(appId);
+
+    const lastFetchedAt = liveInsightFetchedAt[appId] || 0;
+    const isFresh = lastFetchedAt > 0 && (Date.now() - lastFetchedAt) < INSIGHT_CLIENT_FRESH_MS;
+    if ((liveInsightsByApp[appId] && isFresh) || liveInsightLoading[appId]) {
+      return;
+    }
+
+    setLiveInsightLoading((prev) => ({ ...prev, [appId]: true }));
+    try {
+      const insight = await fetchTravelerInsight(countryCode, appId);
+      if (insight && typeof insight === "object") {
+        setLiveInsightsByApp((prev) => ({ ...prev, [appId]: insight }));
+        setLiveInsightFetchedAt((prev) => ({ ...prev, [appId]: Date.now() }));
+      }
+    } finally {
+      setLiveInsightLoading((prev) => ({ ...prev, [appId]: false }));
+    }
   };
+
+  useEffect(() => {
+    setLiveTravelUpdates(Array.isArray(travelUpdates) ? travelUpdates : []);
+    setLiveTravelSignal(travelSignal || {});
+  }, [countryCode, travelUpdates, travelSignal]);
+
+  useEffect(() => {
+    let mounted = true;
+    let intervalId;
+
+    const refreshTravelUpdates = async (force = false) => {
+      if (!mounted) return;
+      if (!force && typeof document !== "undefined" && document.hidden) return;
+
+      try {
+        const payload = await fetchCountryTravelUpdates(countryCode);
+        if (!mounted || !payload) return;
+        const nextUpdates = Array.isArray(payload.updates) ? payload.updates : [];
+        const nextSignal = payload.signal || {};
+        setLiveTravelUpdates(nextUpdates);
+        setLiveTravelSignal(nextSignal);
+      } catch {
+        // Keep current content on transient failures.
+      }
+    };
+
+    const handleVisibility = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        refreshTravelUpdates(true);
+      }
+    };
+
+    // Initial lightweight sync with backend cache when page mounts.
+    refreshTravelUpdates(false);
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility);
+    }
+    intervalId = setInterval(() => refreshTravelUpdates(false), TRAVEL_POLL_INTERVAL_MS);
+
+    return () => {
+      mounted = false;
+      if (intervalId) clearInterval(intervalId);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
+    };
+  }, [countryCode, TRAVEL_POLL_INTERVAL_MS]);
 
 
   const trackAppStoreClick =
@@ -708,11 +793,11 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold text-rose-950">Live Travel Updates</h3>
                 <span className="inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-700 border border-rose-100">
-                  {travelSignal.label || "Latest scan"}
+                  {liveTravelSignal.label || "Latest scan"}
                 </span>
               </div>
               <p className="mt-1 text-xs sm:text-sm text-rose-800 leading-relaxed line-clamp-2">
-                {travelSignal.note || `Latest travel-impacting headlines for ${countryInfo.name}.`}
+                {liveTravelSignal.note || `Latest travel-impacting headlines for ${countryInfo.name}.`}
               </p>
             </div>
           </div>
@@ -759,7 +844,9 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
         <div className="grid grid-cols-1 gap-5 sm:gap-6 items-start">
         {paginatedApps.map((app) => {
           const details = getAppDetails(app);
-          const sentiment = getSentimentInsights(app);
+          const fallbackSentiment = getSentimentInsights(app);
+          const sentiment = liveInsightsByApp[app.id] || fallbackSentiment;
+          const sentimentLoading = !!liveInsightLoading[app.id];
           const sentimentOpen = sentimentPanelFor === app.id;
           return (
             <div key={app.id} className="w-full relative">
@@ -789,7 +876,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleSentimentPanel(app.id);
+                  toggleSentimentPanel(app);
                 }}
                 className={`absolute top-0 left-1/2 -translate-x-1/2 z-20 h-8 w-fit px-2.5 sm:px-3.5 inline-flex items-center justify-center gap-1.5 rounded-b-2xl border border-cyan-300 border-t-0 transition-all duration-300 text-[10px] sm:text-[11px] font-bold tracking-[0.02em] leading-none ${
                   sentimentOpen
@@ -1081,7 +1168,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                     </h3>
                     <button
                       type="button"
-                      onClick={() => toggleSentimentPanel(app.id)}
+                      onClick={() => toggleSentimentPanel(app)}
                       className="inline-flex items-center justify-center rounded-full h-10 w-10 bg-white/95 border border-violet-300 text-violet-700 hover:bg-violet-100 flex-shrink-0"
                       aria-label="Close traveler sentiment panel"
                       title="Close"
@@ -1093,6 +1180,9 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                   {/* Summary section */}
                   <div className="rounded-2xl border border-violet-300/70 bg-white/95 p-4 mb-5 shadow-sm">
                     <p className="text-xs font-bold uppercase tracking-wide text-violet-700 mb-2">What travelers say</p>
+                    {sentimentLoading && !liveInsightsByApp[app.id] && (
+                      <p className="text-xs text-violet-700 mb-2">Refreshing live traveler reviews...</p>
+                    )}
                     <p className="text-sm text-slate-800 leading-relaxed">{sentiment.summary}</p>
                   </div>
 
@@ -1145,6 +1235,13 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                       <span className="font-semibold text-violet-800">{sentiment.confidenceLabel}</span>
                       <span>Updated: {sentiment.lastUpdatedText}</span>
                     </div>
+                    {sentiment?.source && (
+                      <div className="mt-2 text-[11px] text-slate-600">
+                        {sentiment.source.live
+                          ? `Live review sources: ${sentiment.source.reviewCount || 0} reviews`
+                          : "Using metadata fallback (live reviews unavailable)."}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
