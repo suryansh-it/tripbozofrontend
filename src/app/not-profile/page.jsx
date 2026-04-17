@@ -236,7 +236,7 @@ export default function ProfilePage() {
                         : "Set this in onboarding for a more tailored travel experience."}
                     </p>
                     <Link
-                      href="/Onboarding"
+                      href="/Onboarding?step=origin-country#origin-country-selector"
                       className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                     >
                       Update origin <FiArrowRight />
@@ -386,7 +386,7 @@ export default function ProfilePage() {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/Onboarding"
+              href="/Onboarding?step=origin-country#origin-country-selector"
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Open onboarding <FiArrowRight />

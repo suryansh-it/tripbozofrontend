@@ -60,6 +60,27 @@ export default function Onboarding() {
   }, [originQuery]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const requestedStep = new URLSearchParams(window.location.search).get('step')?.toLowerCase();
+    const hash = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
+    const goToOriginSelection =
+      requestedStep === '2' ||
+      requestedStep === 'origin' ||
+      requestedStep === 'origin-country' ||
+      hash === '#origin-country-selector';
+
+    if (goToOriginSelection) {
+      setStep(2);
+      if (typeof window !== 'undefined') {
+        window.requestAnimationFrame(() => {
+          document.getElementById('origin-country-selector')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     let mounted = true;
 
     const hydrateOrigin = async () => {
@@ -176,7 +197,7 @@ export default function Onboarding() {
 
 
         {step === 2 && (
-          <div className="flex flex-col items-center justify-center w-full">
+          <div id="origin-country-selector" className="flex flex-col items-center justify-center w-full scroll-mt-24">
             <h3 className="text-2xl md:text-3xl font-display font-medium text-center mb-3 text-slate-900">Where are you traveling from?</h3>
             <p className="text-base text-slate-600 text-center mb-8">This powers personalized embassy/consular support and more relevant Essentials guidance.</p>
             <div className="w-full max-w-2xl mx-auto">

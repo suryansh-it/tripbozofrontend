@@ -392,7 +392,7 @@ const sampleEsim = [
         ...(originAssistance.mission_finder ? [`Embassy/Consulate Finder: ${originAssistance.mission_finder}`] : []),
         ...(destinationEmbassyContact
           ? [
-              `Destination Embassy/Consular Desk (${destinationEmbassyContact.name}): ${destinationEmbassyContact.phone || "Phone not listed"}`,
+              `Destination Embassy/Consular Desk: ${destinationEmbassyContact.phone || "Phone not listed"}`,
               ...(destinationEmbassyContact.address ? [`Destination Embassy Address: ${destinationEmbassyContact.address}`] : []),
             ]
           : ["Destination Embassy/Consular Desk: Not listed"]),
@@ -526,7 +526,30 @@ const sampleEsim = [
 
 
   if (loading) {
-    return <p className="p-8 text-center">Loading…</p>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#e0f7fa] via-[#f5fafd] to-[#e3f2fd]">
+        <div className="w-full bg-gradient-to-r from-[#38bdf8] via-[#2ad2c9] to-[#5eead4] py-12 text-white shadow-xl">
+          <div className="mx-auto flex max-w-2xl flex-col items-center px-4 text-center">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white/35 bg-white/20">
+              <span className="h-10 w-10 animate-spin rounded-full border-4 border-white/40 border-t-white" aria-hidden="true" />
+            </div>
+            <h1 className="text-3xl font-extrabold md:text-4xl">Loading Essentials</h1>
+            <p className="mt-3 text-white/90">
+              Fetching emergency contacts, useful phrases, and country assistance for {countryName || country?.toUpperCase()}.
+            </p>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-4xl px-4 py-10">
+          <div className="grid animate-pulse gap-6 md:grid-cols-2">
+            <div className="h-40 rounded-3xl border-l-8 border-indigo-300 bg-white/90 shadow-md" />
+            <div className="h-40 rounded-3xl border-l-8 border-teal-300 bg-white/90 shadow-md" />
+            <div className="h-40 rounded-3xl border-l-8 border-amber-300 bg-white/90 shadow-md" />
+            <div className="h-40 rounded-3xl border-l-8 border-cyan-300 bg-white/90 shadow-md" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
 
@@ -701,23 +724,21 @@ const sampleEsim = [
                 </>
               ) : (
                 <div className="rounded-lg border border-indigo-200 bg-white/70 px-3 py-2 text-indigo-900">
-                  Verified consular profile is not cached yet for {originCountry.code}. Open this page again in a moment to retry auto-fetch.
+                  We are still loading your verified consular support details for {originCountry.code}. Please refresh this page in a few seconds.
                 </div>
               )}
               <p>
                 <span className="font-semibold">Destination Embassy/Consular Desk:</span>{" "}
                 {destinationEmbassyContact ? (
                   <span>
-                    <span className="font-semibold">{destinationEmbassyContact.name}</span>
                     {destinationEmbassyContact.phone ? (
                       <>
-                        {": "}
                         <a href={`tel:${destinationEmbassyContact.phone}`} className="underline font-semibold hover:text-indigo-700">
                           {destinationEmbassyContact.phone}
                         </a>
                       </>
                     ) : (
-                      <span>{": Phone not listed"}</span>
+                      <span>Phone not listed</span>
                     )}
                   </span>
                 ) : (
@@ -767,7 +788,7 @@ const sampleEsim = [
           ) : (
             <div className="space-y-2 text-sm sm:text-base text-indigo-950">
               <p>Add your origin country to get personalized embassy and consular support details.</p>
-              <Link href="/Onboarding" className="inline-block rounded-lg bg-indigo-600 px-4 py-2 text-white font-semibold hover:bg-indigo-700 transition">
+              <Link href="/Onboarding?step=origin-country#origin-country-selector" className="inline-block rounded-lg bg-indigo-600 px-4 py-2 text-white font-semibold hover:bg-indigo-700 transition">
                 Set Origin Country
               </Link>
             </div>
