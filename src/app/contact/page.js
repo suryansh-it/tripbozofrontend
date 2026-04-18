@@ -7,7 +7,8 @@ import AppLink from "@/components/AppLink";
 import { FaXTwitter } from 'react-icons/fa6';
 
 export const metadata = {
-  title: "Contact Us | tripBozo",
+  title: "Contact Us | tripbozo",
+  description: "Contact the Tripbozo team for support, feedback, partnership requests, or general questions.",
 };
 
 export default function ContactPage() {
