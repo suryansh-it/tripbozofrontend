@@ -56,19 +56,19 @@ useEffect(() => {
     <>  
     <nav
     className={`
-      fixed inset-x-0 top-0 z-50 h-16 flex items-center
+      fixed inset-x-0 top-0 z-50 h-14 sm:h-15 flex items-center
       transition-colors duration-300
       ${scrolled
         ? "bg-white/30 backdrop-blur-md shadow-sm"
         : "bg-transparent"}
     `}
     >
-      <div className="w-[98%] mx-auto py-1 sm:py-4 flex justify-between items-center relative">
+      <div className="w-[98%] mx-auto py-1 sm:py-2 flex justify-between items-center relative">
 
         {/* Left: Brand - pushed to extreme left */}
         <div className="flex items-center z-20 pl-1">
           <Link href="/">
-            <div className="w-30 sm:w-32"> {/* responsive wrapper width */}
+            <div className="w-24 sm:w-28"> {/* responsive wrapper width */}
               <Image
                 src="/icons/icon.png"
                 alt="trip Logo"
@@ -90,9 +90,9 @@ useEffect(() => {
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? (
-              <FiX className="w-6 h-6" />
+              <FiX className="w-5 h-5" />
             ) : (
-              <FiMenu className="w-6 h-6" />
+              <FiMenu className="w-5 h-5" />
             )}
           </button>
 
@@ -187,12 +187,12 @@ useEffect(() => {
         </div>
 
         {/* Right: Login and Get Started - pushed to extreme right (Desktop Only) */}
-        <div className="hidden lg:flex items-center space-x-4 pr-1">
+        <div className="hidden lg:flex items-center space-x-3 pr-1">
         {/* Desktop Buttons */}
 {isLoggedIn ? (
   <button
     onClick={() => setShowProfile((v) => !v)}
-    className="inline-flex items-center rounded-full border border-teal-200 bg-white/85 px-4 py-2 text-sm font-semibold tracking-wide text-slate-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-slate-950"
+    className="inline-flex items-center rounded-full border border-teal-200 bg-white/85 px-3 py-1.5 text-sm font-semibold tracking-wide text-slate-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-slate-950"
   >
     Profile
   </button>
@@ -200,7 +200,7 @@ useEffect(() => {
   <Link
     href="/login"
     onClick={() => setMobileMenuOpen(false)}
-    className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 px-4 py-2 text-sm font-semibold tracking-wide text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-teal-600 hover:via-cyan-600 hover:to-sky-600 hover:shadow-cyan-500/30"
+    className="inline-flex items-center rounded-full bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 px-3 py-1.5 text-sm font-semibold tracking-wide text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-teal-600 hover:via-cyan-600 hover:to-sky-600 hover:shadow-cyan-500/30"
   >
     Login
   </Link>
@@ -208,7 +208,7 @@ useEffect(() => {
 
 <Link
   href="/Onboarding"
-  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold tracking-wide text-slate-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-slate-50 hover:shadow-md"
+  className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold tracking-wide text-slate-800 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-slate-50 hover:shadow-md"
 >
   Get Started
 </Link>

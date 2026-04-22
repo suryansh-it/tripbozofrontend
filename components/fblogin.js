@@ -11,7 +11,7 @@ export default function FacebookLoginBtn() {
     if (!response?.accessToken) return;
 
     try {
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/social/facebook/`, {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/social/facebook/`, {
         access_token: response.accessToken,
       });
 
