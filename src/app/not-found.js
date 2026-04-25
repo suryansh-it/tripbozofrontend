@@ -1,19 +1,29 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function NotFound() {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState('');
   const [formData, setFormData] = useState({
     country: '',
-    message: '',
-    email: ''
+    message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ success: false, message: '' });
+
+  // Check if user is authenticated on mount
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      setIsAuthenticated(true);
+      setAuthToken(token);
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -24,12 +34,21 @@ export default function NotFound() {
     e.preventDefault();
     setIsSubmitting(true);
     
+    if (!isAuthenticated) {
+      setSubmitStatus({ success: false, message: "Please log in first to submit a suggestion." });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/homepage/suggest-country/`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
           body: JSON.stringify(formData),
         }
       );
@@ -37,7 +56,7 @@ export default function NotFound() {
       const data = await response.json();
       if (response.ok && data.result === "success") {
         setSubmitStatus({ success: true, message: "Suggestion submitted successfully!" });
-        setFormData({ country: '', message: '', email: '' });
+        setFormData({ country: '', message: '' });
         setTimeout(() => setShowForm(false), 2000);
       } else {
         throw new Error(data.message || "Submission failed");
@@ -47,6 +66,17 @@ export default function NotFound() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleOpenForm = () => {
+    if (!isAuthenticated) {
+      setSubmitStatus({ success: false, message: "Please log in to submit a suggestion. Redirecting..." });
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
+      return;
+    }
+    setShowForm(true);
   };
 
   return (
@@ -67,7 +97,7 @@ export default function NotFound() {
       )}
 
       {/* Suggestion Form Modal */}
-      {showForm && (
+      {showForm && isAuthenticated && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-6">
@@ -114,21 +144,6 @@ export default function NotFound() {
                   />
                 </div>
                 
-                <div>
-                  <label htmlFor="email" className="block text-gray-700 mb-1">
-                    Your Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="Optional - for follow-up questions"
-                  />
-                </div>
-                
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -163,6 +178,15 @@ export default function NotFound() {
               👉 Stay tuned! Your destination might be next on our radar.
             </p>
           </div>
+
+          {/* Help users know they need to login */}
+          {!isAuthenticated && (
+            <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+              <p className="text-amber-900 font-medium text-sm">
+                💡 <strong>Tip:</strong> Log in to submit your country suggestion!
+              </p>
+            </div>
+          )}
           
           <div className="flex flex-col space-y-4">
             <Link 
@@ -173,11 +197,26 @@ export default function NotFound() {
             </Link>
             
             <button
-              onClick={() => setShowForm(true)}
-              className="inline-flex justify-center items-center px-6 py-3 border border-teal-500 text-teal-500 font-medium rounded-lg hover:bg-teal-50 transition-colors"
+              onClick={handleOpenForm}
+              className={`inline-flex justify-center items-center px-6 py-3 border border-teal-500 font-medium rounded-lg transition-colors ${
+                isAuthenticated
+                  ? 'text-teal-500 hover:bg-teal-50 cursor-pointer'
+                  : 'text-gray-400 border-gray-300 bg-gray-50 cursor-not-allowed'
+              }`}
+              disabled={!isAuthenticated}
+              title={!isAuthenticated ? "Log in to submit a suggestion" : ""}
             >
-              Send Us a Suggestion
+              {isAuthenticated ? 'Send Us a Suggestion' : 'Log in to Suggest a Country'}
             </button>
+
+            {!isAuthenticated && (
+              <Link 
+                href="/login"
+                className="inline-flex justify-center items-center px-6 py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Go to Login
+              </Link>
+            )}
           </div>
         </div>
       </div>
