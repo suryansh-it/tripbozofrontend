@@ -16,13 +16,30 @@ export default function NotFound() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ success: false, message: '' });
 
-  // Check if user is authenticated on mount
+  // Check authentication status on mount and listen for storage changes
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      setIsAuthenticated(true);
-      setAuthToken(token);
-    }
+    const checkAuth = () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        setIsAuthenticated(true);
+        setAuthToken(token);
+      } else {
+        setIsAuthenticated(false);
+        setAuthToken('');
+      }
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (e.g., when user logs in on another tab or after redirect)
+    const handleStorageChange = (e) => {
+      if (e.key === 'access_token' || e.key === null) {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleInputChange = (e) => {
@@ -69,13 +86,18 @@ export default function NotFound() {
   };
 
   const handleOpenForm = () => {
-    if (!isAuthenticated) {
+    // Re-check authentication status on click (fresh check)
+    const token = localStorage.getItem('access_token');
+    if (!token) {
       setSubmitStatus({ success: false, message: "Please log in to submit a suggestion. Redirecting..." });
       setTimeout(() => {
         router.push('/login');
       }, 1500);
       return;
     }
+    // Update state and open form
+    setIsAuthenticated(true);
+    setAuthToken(token);
     setShowForm(true);
   };
 
