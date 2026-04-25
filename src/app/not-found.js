@@ -25,19 +25,17 @@ export default function NotFound() {
     setIsSubmitting(true);
     
     try {
-      // Replace with your actual Google Apps Script URL
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydYWOCAN4Dy1MF8tEw9_ABOvWM00mHa00CvOrumF43qJ8Qgf_w-zvGT0-lTe4kp6FGAw/exec";
-      
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify(formData),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/homepage/suggest-country/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+
       const data = await response.json();
-      if (data.result === "success") {
+      if (response.ok && data.result === "success") {
         setSubmitStatus({ success: true, message: "Suggestion submitted successfully!" });
         setFormData({ country: '', message: '', email: '' });
         setTimeout(() => setShowForm(false), 2000);
