@@ -47,11 +47,21 @@ export default function NotFound() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Helper to check if user is authenticated (checks localStorage directly)
+  const checkIsAuthenticated = () => {
+    return !!localStorage.getItem('access_token');
+  };
+
+  const getAuthToken = () => {
+    return localStorage.getItem('access_token') || '';
+  };
+
   const sendSuggestion = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    if (!isAuthenticated) {
+    const token = getAuthToken();
+    if (!token) {
       setSubmitStatus({ success: false, message: "Please log in first to submit a suggestion." });
       setIsSubmitting(false);
       return;
@@ -64,7 +74,7 @@ export default function NotFound() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${authToken}`
+            "Authorization": `Bearer ${token}`
           },
           body: JSON.stringify(formData),
         }
@@ -86,18 +96,14 @@ export default function NotFound() {
   };
 
   const handleOpenForm = () => {
-    // Re-check authentication status on click (fresh check)
-    const token = localStorage.getItem('access_token');
-    if (!token) {
+    // Fresh check of authentication
+    if (!checkIsAuthenticated()) {
       setSubmitStatus({ success: false, message: "Please log in to submit a suggestion. Redirecting..." });
       setTimeout(() => {
         router.push('/login');
       }, 1500);
       return;
     }
-    // Update state and open form
-    setIsAuthenticated(true);
-    setAuthToken(token);
     setShowForm(true);
   };
 
@@ -119,7 +125,7 @@ export default function NotFound() {
       )}
 
       {/* Suggestion Form Modal */}
-      {showForm && isAuthenticated && (
+      {showForm && checkIsAuthenticated() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-6">
@@ -202,7 +208,7 @@ export default function NotFound() {
           </div>
 
           {/* Help users know they need to login */}
-          {!isAuthenticated && (
+          {!checkIsAuthenticated() && (
             <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
               <p className="text-amber-900 font-medium text-sm">
                 💡 <strong>Tip:</strong> Log in to submit your country suggestion!
@@ -221,17 +227,17 @@ export default function NotFound() {
             <button
               onClick={handleOpenForm}
               className={`inline-flex justify-center items-center px-6 py-3 border border-teal-500 font-medium rounded-lg transition-colors ${
-                isAuthenticated
+                checkIsAuthenticated()
                   ? 'text-teal-500 hover:bg-teal-50 cursor-pointer'
                   : 'text-gray-400 border-gray-300 bg-gray-50 cursor-not-allowed'
               }`}
-              disabled={!isAuthenticated}
-              title={!isAuthenticated ? "Log in to submit a suggestion" : ""}
+              disabled={!checkIsAuthenticated()}
+              title={!checkIsAuthenticated() ? "Log in to submit a suggestion" : ""}
             >
-              {isAuthenticated ? 'Send Us a Suggestion' : 'Log in to Suggest a Country'}
+              {checkIsAuthenticated() ? 'Send Us a Suggestion' : 'Log in to Suggest a Country'}
             </button>
 
-            {!isAuthenticated && (
+            {!checkIsAuthenticated() && (
               <Link 
                 href="/login"
                 className="inline-flex justify-center items-center px-6 py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors"
