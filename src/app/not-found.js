@@ -47,12 +47,14 @@ export default function NotFound() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Helper to check if user is authenticated (checks localStorage directly)
+  // Helper to check if user is authenticated (checks localStorage directly, only safe in handlers)
   const checkIsAuthenticated = () => {
+    if (typeof window === 'undefined') return false;
     return !!localStorage.getItem('access_token');
   };
 
   const getAuthToken = () => {
+    if (typeof window === 'undefined') return '';
     return localStorage.getItem('access_token') || '';
   };
 
@@ -125,7 +127,7 @@ export default function NotFound() {
       )}
 
       {/* Suggestion Form Modal */}
-      {showForm && checkIsAuthenticated() && (
+      {showForm && isAuthenticated && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-6">
@@ -208,7 +210,7 @@ export default function NotFound() {
           </div>
 
           {/* Help users know they need to login */}
-          {!checkIsAuthenticated() && (
+          {!isAuthenticated && (
             <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
               <p className="text-amber-900 font-medium text-sm">
                 💡 <strong>Tip:</strong> Log in to submit your country suggestion!
@@ -227,17 +229,17 @@ export default function NotFound() {
             <button
               onClick={handleOpenForm}
               className={`inline-flex justify-center items-center px-6 py-3 border border-teal-500 font-medium rounded-lg transition-colors ${
-                checkIsAuthenticated()
+                isAuthenticated
                   ? 'text-teal-500 hover:bg-teal-50 cursor-pointer'
                   : 'text-gray-400 border-gray-300 bg-gray-50 cursor-not-allowed'
               }`}
-              disabled={!checkIsAuthenticated()}
-              title={!checkIsAuthenticated() ? "Log in to submit a suggestion" : ""}
+              disabled={!isAuthenticated}
+              title={!isAuthenticated ? "Log in to submit a suggestion" : ""}
             >
-              {checkIsAuthenticated() ? 'Send Us a Suggestion' : 'Log in to Suggest a Country'}
+              {isAuthenticated ? 'Send Us a Suggestion' : 'Log in to Suggest a Country'}
             </button>
 
-            {!checkIsAuthenticated() && (
+            {!isAuthenticated && (
               <Link 
                 href="/login"
                 className="inline-flex justify-center items-center px-6 py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors"
