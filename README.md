@@ -1,4 +1,4 @@
-have # Tripbozo - Travel App Discovery and Essentials Platform
+# Tripbozo - Travel App Discovery and Essentials Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Django](https://img.shields.io/badge/Django-5.1.6-green.svg)](https://djangoproject.com/)
@@ -4797,6 +4797,7 @@ Use this citation mapping in your report:
 **Version**: 1.0 (Production Ready)
 
 For detailed API documentation and additional technical details, refer to the respective repository READMEs and inline code documentation.
+
 
 
 
