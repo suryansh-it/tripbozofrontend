@@ -19,7 +19,7 @@ export default function NotFound() {
   // Check authentication status on mount and listen for storage changes
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('authToken') || localStorage.getItem('access_token');
       if (token) {
         setIsAuthenticated(true);
         setAuthToken(token);
@@ -33,7 +33,7 @@ export default function NotFound() {
 
     // Listen for storage changes (e.g., when user logs in on another tab or after redirect)
     const handleStorageChange = (e) => {
-      if (e.key === 'access_token' || e.key === null) {
+      if (e.key === 'authToken' || e.key === 'access_token' || e.key === null) {
         checkAuth();
       }
     };
@@ -50,12 +50,12 @@ export default function NotFound() {
   // Helper to check if user is authenticated (checks localStorage directly, only safe in handlers)
   const checkIsAuthenticated = () => {
     if (typeof window === 'undefined') return false;
-    return !!localStorage.getItem('access_token');
+    return !!(localStorage.getItem('authToken') || localStorage.getItem('access_token'));
   };
 
   const getAuthToken = () => {
     if (typeof window === 'undefined') return '';
-    return localStorage.getItem('access_token') || '';
+    return localStorage.getItem('authToken') || localStorage.getItem('access_token') || '';
   };
 
   const sendSuggestion = async (e) => {
