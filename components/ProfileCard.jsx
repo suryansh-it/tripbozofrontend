@@ -11,8 +11,11 @@ export default function ProfileCard({ open, onClose }) {
   const ref = useRef();
   const [user, setUser] = useState(null);
   const [originCountry, setOriginCountry] = useState(null);
-  const rawToken =
-    typeof window !== "undefined" && localStorage.getItem("authToken");
+
+  const getStoredToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("authToken") || localStorage.getItem("access_token");
+  };
 
   // click‐outside to close
   useEffect(() => {
@@ -27,6 +30,7 @@ export default function ProfileCard({ open, onClose }) {
 
   // fetch user
   useEffect(() => {
+    const rawToken = getStoredToken();
     if (!open || !rawToken) return;
     const isJwt = rawToken.split(".").length === 3;
     const headerValue = isJwt ? `Bearer ${rawToken}` : `Token ${rawToken}`;
@@ -36,10 +40,18 @@ export default function ProfileCard({ open, onClose }) {
         headers: { Authorization: headerValue },
       })
       .then((r) => setUser(r.data))
-      .catch(() => setUser(null));
-  }, [open, rawToken]);
+      .catch((err) => {
+        setUser(null);
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("access_token");
+          window.dispatchEvent(new Event("auth-changed"));
+        }
+      });
+  }, [open]);
 
   useEffect(() => {
+    const rawToken = getStoredToken();
     if (!open || !rawToken) {
       setOriginCountry(null);
       return;
@@ -54,13 +66,15 @@ export default function ProfileCard({ open, onClose }) {
     return () => {
       mounted = false;
     };
-  }, [open, rawToken]);
+  }, [open]);
 
   if (!open) return null;
 
   // shared clear function
   const clearAuth = () => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("access_token");
+    window.dispatchEvent(new Event("auth-changed"));
   };
 
   const handleLogout = () => {
@@ -74,6 +88,12 @@ export default function ProfileCard({ open, onClose }) {
         "This will permanently delete your account. Are you sure you want to proceed?"
       )
     ) {
+      return;
+    }
+
+    const rawToken = getStoredToken();
+    if (!rawToken) {
+      clearAuth();
       return;
     }
 

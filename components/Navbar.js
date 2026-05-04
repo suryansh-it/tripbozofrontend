@@ -17,21 +17,50 @@ const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const getValidToken = () => {
+    const token = localStorage.getItem("authToken") || localStorage.getItem("access_token");
+    if (!token) return null;
+
+    // If JWT, verify exp so stale tokens do not keep UI in logged-in mode.
+    if (token.split(".").length === 3) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        if (payload?.exp && payload.exp <= Math.floor(Date.now() / 1000)) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("access_token");
+          return null;
+        }
+      } catch {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("access_token");
+        return null;
+      }
+    }
+
+    return token;
+  };
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen((open) => !open);
   };
 
- // update on mount, on route change, or on storage event
+ // update on mount and auth changes (including same-tab custom event)
  useEffect(() => {
-  const updateLogin = () => setIsLoggedIn(!!localStorage.getItem("authToken"));
+  const updateLogin = () => setIsLoggedIn(!!getValidToken());
   updateLogin();
   window.addEventListener("storage", updateLogin);
-  return () => window.removeEventListener("storage", updateLogin);
+  window.addEventListener("focus", updateLogin);
+  window.addEventListener("auth-changed", updateLogin);
+  return () => {
+    window.removeEventListener("storage", updateLogin);
+    window.removeEventListener("focus", updateLogin);
+    window.removeEventListener("auth-changed", updateLogin);
+  };
 }, []);
 
 // also update whenever the user navigates
 useEffect(() => {
-  setIsLoggedIn(!!localStorage.getItem("authToken"));
+  setIsLoggedIn(!!getValidToken());
 }, [pathname]);
 
 // scroll listener, click-outside listener, etc…
