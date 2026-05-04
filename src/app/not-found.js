@@ -170,7 +170,7 @@ export default function NotFound() {
                     required
                     rows={4}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="Tell us about the apps travelers need in this country..."
+                    placeholder="Tell us why this country would be valuable for travelers..."
                   />
                 </div>
                 

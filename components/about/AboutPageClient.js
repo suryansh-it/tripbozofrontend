@@ -242,47 +242,65 @@ export default function AboutPageClient() {
           </div>
         </section>
 
-        <section className="w-full bg-gradient-to-r from-[#2ad2c9] via-[#38bdf8] to-[#5eead4] text-white py-16 px-4 sm:px-8 relative overflow-hidden">
-          <div className="max-w-4xl mx-auto relative z-10 text-center">
-            <h2 className="text-3xl sm:text-5xl font-extrabold mb-6 drop-shadow-lg">We’d Love Your Feedback</h2>
+        <section className="w-full bg-gradient-to-r from-[#2ad2c9] via-[#38bdf8] to-[#5eead4] text-white py-20 sm:py-28 px-4 sm:px-8 relative overflow-hidden">
+          <div className="max-w-3xl mx-auto relative z-10">
+            <div className="text-center mb-12 sm:mb-16">
+              <h2 className="text-3xl sm:text-5xl font-extrabold drop-shadow-lg">We'd Love Your Feedback</h2>
+              <p className="text-white/90 text-lg mt-3 sm:mt-4">Help us improve tripbozo by sharing your thoughts and suggestions</p>
+            </div>
 
             <form
               onSubmit={handleSubmit}
-              className="grid gap-4 sm:grid-cols-2 bg-white p-8 rounded-2xl shadow-lg text-gray-800"
+              className="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 text-gray-800 space-y-6 max-w-2xl mx-auto"
             >
-              <input
-                type="text"
-                name="name"
-                placeholder="Your Name"
-                required
-                className="col-span-2 sm:col-span-1 px-4 py-2 rounded-lg border focus:outline-none"
-                value={form.name}
-                onChange={handleChange}
-              />
-              <textarea
-                name="message"
-                placeholder="Your Feedback…"
-                rows={4}
-                required
-                className="col-span-2 px-4 py-2 rounded-lg border focus:outline-none"
-                value={form.message}
-                onChange={handleChange}
-              />
+              <div>
+                <label htmlFor="feedback-name" className="block text-gray-700 font-semibold mb-2">
+                  Your Name
+                </label>
+                <input
+                  id="feedback-name"
+                  type="text"
+                  name="name"
+                  placeholder="Enter your name"
+                  required
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  value={form.name}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="feedback-message" className="block text-gray-700 font-semibold mb-2">
+                  Your Feedback
+                </label>
+                <textarea
+                  id="feedback-message"
+                  name="message"
+                  placeholder="Tell us what you think about tripbozo..."
+                  rows={5}
+                  required
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                  value={form.message}
+                  onChange={handleChange}
+                />
+              </div>
 
               {submitStatus.message ? (
-                <p
-                  className={`col-span-2 text-sm font-medium ${
-                    submitStatus.success ? 'text-emerald-700' : 'text-rose-700'
+                <div
+                  className={`p-4 rounded-lg text-sm font-medium ${
+                    submitStatus.success 
+                      ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
+                      : 'bg-rose-100 text-rose-700 border border-rose-300'
                   }`}
                 >
                   {submitStatus.message}
-                </p>
+                </div>
               ) : null}
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="col-span-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 rounded-full transition shadow-md"
+                className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-semibold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Sending...' : 'Send Feedback'}
               </button>
