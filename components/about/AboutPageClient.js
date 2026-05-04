@@ -7,7 +7,9 @@ import { useLoader } from '@/components/LoaderContext';
 
 export default function AboutPageClient() {
   const { setShow } = useLoader();
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [form, setForm] = useState({ name: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({ success: false, message: '' });
 
   const handleStartNow = () => {
     setShow(true);
@@ -17,9 +19,57 @@ export default function AboutPageClient() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Feedback submitted:', form);
+
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('authToken') || localStorage.getItem('access_token')
+        : null;
+
+    if (!token) {
+      setSubmitStatus({
+        success: false,
+        message: 'Please log in to submit feedback. Redirecting to login...',
+      });
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1200);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus({ success: false, message: '' });
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/homepage/feedback/`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(form),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok && data.result === 'success') {
+        setSubmitStatus({ success: true, message: 'Feedback sent successfully. Thank you!' });
+        setForm({ name: '', message: '' });
+      } else {
+        throw new Error(data.message || 'Feedback submission failed');
+      }
+    } catch (err) {
+      setSubmitStatus({
+        success: false,
+        message: err?.message || 'Something went wrong while submitting feedback.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const splitFeatureText = (text) => {
@@ -197,25 +247,17 @@ export default function AboutPageClient() {
             <h2 className="text-3xl sm:text-5xl font-extrabold mb-6 drop-shadow-lg">We’d Love Your Feedback</h2>
 
             <form
-              action="https://formsubmit.co/bozotrip@gmail.com"
-              method="POST"
+              onSubmit={handleSubmit}
               className="grid gap-4 sm:grid-cols-2 bg-white p-8 rounded-2xl shadow-lg text-gray-800"
             >
-              <input type="hidden" name="_captcha" value="false" />
-
               <input
                 type="text"
                 name="name"
                 placeholder="Your Name"
                 required
                 className="col-span-2 sm:col-span-1 px-4 py-2 rounded-lg border focus:outline-none"
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Your Email"
-                required
-                className="col-span-2 sm:col-span-1 px-4 py-2 rounded-lg border focus:outline-none"
+                value={form.name}
+                onChange={handleChange}
               />
               <textarea
                 name="message"
@@ -223,13 +265,26 @@ export default function AboutPageClient() {
                 rows={4}
                 required
                 className="col-span-2 px-4 py-2 rounded-lg border focus:outline-none"
+                value={form.message}
+                onChange={handleChange}
               />
+
+              {submitStatus.message ? (
+                <p
+                  className={`col-span-2 text-sm font-medium ${
+                    submitStatus.success ? 'text-emerald-700' : 'text-rose-700'
+                  }`}
+                >
+                  {submitStatus.message}
+                </p>
+              ) : null}
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="col-span-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 rounded-full transition shadow-md"
               >
-                Send Feedback
+                {isSubmitting ? 'Sending...' : 'Send Feedback'}
               </button>
             </form>
           </div>
