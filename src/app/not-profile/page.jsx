@@ -7,6 +7,7 @@ import axios from "axios";
 import { FiEdit3, FiLogOut, FiMapPin, FiShield, FiUser, FiArrowRight } from "react-icons/fi";
 import { fetchUserOriginCountryPreference } from "@/src/utils/api";
 import ProfileRightPanel from "@/components/profile/ProfileRightPanel";
+import ScrollNavButtons from "@/components/ScrollNavButtons";
 
 const emptyProfile = {
   name: "",
@@ -352,6 +353,7 @@ export default function ProfilePage() {
           <ProfileRightPanel />
         </aside>
       </div>
+      <ScrollNavButtons />
     </main>
   );
 }

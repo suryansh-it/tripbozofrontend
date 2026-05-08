@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -12,7 +12,11 @@ import {
   FaArrowLeft,
   FaCheckCircle,
   FaExternalLinkAlt,
+  FaRegBookmark,
+  FaBookmark,
 } from "react-icons/fa";
+import ScrollNavButtons from "@/components/ScrollNavButtons";
+import { addBookmark, fetchCountryInfo, fetchUserBookmarks, removeBookmark } from "@/src/utils/api";
 
 const SERVICE_DATA = {
   esim: {
@@ -74,10 +78,59 @@ const SECTION_ORDER = ["esim", "insurance", "booking", "utilities"];
 export default function CountryServicesPage() {
   const { country } = useParams();
   const countryCode = String(country || "").toUpperCase();
+  const [countryInfo, setCountryInfo] = useState(null);
+  const [bookmarkId, setBookmarkId] = useState(null);
   const [selectedSection, setSelectedSection] = useState("esim");
   const [selectedProviders, setSelectedProviders] = useState([]);
 
   const section = SERVICE_DATA[selectedSection];
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCountry = async () => {
+      try {
+        const info = await fetchCountryInfo(countryCode);
+        if (!mounted) return;
+        setCountryInfo(info || null);
+
+        const bookmarks = await fetchUserBookmarks("country");
+        if (!mounted) return;
+        const match = Array.isArray(bookmarks)
+          ? bookmarks.find((item) => String(item?.country) === String(info?.id))
+          : null;
+        setBookmarkId(match?.id || null);
+      } catch {
+        if (!mounted) return;
+        setCountryInfo(null);
+        setBookmarkId(null);
+      }
+    };
+
+    loadCountry();
+    return () => {
+      mounted = false;
+    };
+  }, [countryCode]);
+
+  const toggleCountryBookmark = async () => {
+    if (!countryInfo?.id) return;
+
+    if (bookmarkId) {
+      const ok = await removeBookmark(bookmarkId);
+      if (ok) {
+        setBookmarkId(null);
+        window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId: countryInfo.id } }));
+      }
+      return;
+    }
+
+    const res = await addBookmark("country", countryInfo.id, null);
+    if (res?.id) {
+      setBookmarkId(res.id);
+      window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId: countryInfo.id } }));
+    }
+  };
 
   const comparisonRows = useMemo(() => {
     const all = section.providers.filter((provider) => selectedProviders.includes(provider.name));
@@ -108,19 +161,37 @@ export default function CountryServicesPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Travel services hub</p>
-              <h1 className="mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">
-                Compare useful services for {countryCode}
-              </h1>
+              <div className="mt-2 flex items-center gap-2 sm:gap-3">
+                <h1 className="text-3xl font-bold text-slate-950 sm:text-4xl">
+                  {countryInfo?.name || countryCode}
+                </h1>
+                <button
+                  type="button"
+                  onClick={toggleCountryBookmark}
+                  title={bookmarkId ? "Remove bookmark" : "Bookmark country"}
+                  aria-label={bookmarkId ? "Remove bookmark" : "Bookmark country"}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-95 ${
+                    bookmarkId
+                      ? "border-teal-300 bg-teal-500 text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-cyan-200 hover:bg-cyan-50"
+                  }`}
+                >
+                  {bookmarkId ? <FaBookmark /> : <FaRegBookmark />}
+                </button>
+                <span className="hidden rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 sm:inline-flex">
+                  {countryInfo?.code || countryCode}
+                </span>
+              </div>
               <p className="mt-2 max-w-3xl text-sm text-slate-600 sm:text-base">
                 Use this page like a quick comparison marketplace: pick a section, shortlist providers, and compare side by side before choosing.
               </p>
             </div>
             <Link
               href={`/country/${countryCode}`}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-cyan-300 hover:bg-cyan-50"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 transition hover:border-cyan-300 hover:bg-cyan-50"
             >
               <FaArrowLeft />
-              Back to country apps
+              <span className="ml-2 hidden sm:inline">Apps</span>
             </Link>
           </div>
         </header>
@@ -260,6 +331,7 @@ export default function CountryServicesPage() {
           </div>
         </section>
       </div>
+      <ScrollNavButtons />
     </main>
   );
 }
