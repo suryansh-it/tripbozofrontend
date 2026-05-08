@@ -157,12 +157,12 @@ export default function CountryServicesPage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.12),_transparent_25%),linear-gradient(180deg,#f7fbff_0%,#ecf7ff_100%)] px-4 py-10 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl">
-        <header className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-[0_20px_60px_rgba(15,118,110,0.12)] backdrop-blur-xl sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <header className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_20px_60px_rgba(15,118,110,0.12)] backdrop-blur-xl sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Travel services hub</p>
               <div className="mt-2 flex items-center gap-2 sm:gap-3">
-                <h1 className="text-3xl font-bold text-slate-950 sm:text-4xl">
+                <h1 className="text-2xl font-bold text-slate-950 sm:text-4xl">
                   {countryInfo?.name || countryCode}
                 </h1>
                 <button
@@ -170,7 +170,7 @@ export default function CountryServicesPage() {
                   onClick={toggleCountryBookmark}
                   title={bookmarkId ? "Remove bookmark" : "Bookmark country"}
                   aria-label={bookmarkId ? "Remove bookmark" : "Bookmark country"}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-95 ${
+                  className={`inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border transition active:scale-95 ${
                     bookmarkId
                       ? "border-teal-300 bg-teal-500 text-white"
                       : "border-slate-200 bg-white text-slate-600 hover:border-cyan-200 hover:bg-cyan-50"

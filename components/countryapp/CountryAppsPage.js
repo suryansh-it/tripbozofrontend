@@ -846,11 +846,11 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     
         <div className="relative w-[94vw] max-w-[1920px] mx-auto px-3 sm:px-6 md:px-10 lg:px-14 flex flex-col justify-center h-full z-10"> 
                  {/* ✅ Dynamically show code, name and description from `countryInfo` */}
-         <div className="flex items-center gap-2 sm:gap-4 md:gap-6 mb-1 sm:mb-2 mt-3 sm:mt-6 md:mt-8">
-           <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-white/80">
+         <div className="flex items-center gap-1 sm:gap-4 md:gap-6 mb-1 sm:mb-2 mt-3 sm:mt-6 md:mt-8">
+           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-white/80">
              {countryInfo.code}
            </span>
-           <span className="text-3xl sm:text-5xl md:text-6xl font-black text-white ml-1 sm:ml-3 drop-shadow-lg leading-tight">
+           <span className="text-2xl sm:text-4xl md:text-5xl font-black text-white ml-1 sm:ml-3 drop-shadow-lg leading-tight">
              {countryInfo.name}
            </span>
          </div>
@@ -865,7 +865,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
              <button
                type="button"
                onClick={(e) => { e.stopPropagation(); toggleCountryBookmark(); }}
-               className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm ${
+               className={`inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm ${
                  bookmarkMap.country?.[countryInfo?.id]
                    ? "border-teal-300 bg-teal-500 text-white shadow-teal-200 hover:bg-teal-600"
                    : "border-slate-200 bg-white text-slate-800 hover:border-cyan-200 hover:bg-cyan-50"
