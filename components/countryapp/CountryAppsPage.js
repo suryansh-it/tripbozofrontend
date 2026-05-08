@@ -1,6 +1,6 @@
 
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLoader } from "@/components/LoaderContext";
 
@@ -25,6 +25,7 @@ import {
   saveSelectedApps,
   fetchTravelerInsight,
   fetchCountryTravelUpdates,
+  recordCountryVisit,
 } from "@/src/utils/api";
 import ScrollNavButtons from "@/components/ScrollNavButtons";
 
@@ -36,6 +37,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
 
   const router = useRouter();
   const { setShow } = useLoader();
+  const visitTrackedRef = useRef(false);
   const storageKey = `selectedAppIds_${countryCode}`;
   const ratingStorageKey = `appRatings_${countryCode}`;
   const [selectedApps, setSelectedApps] = useState(() => {
@@ -62,6 +64,12 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
   useEffect(() => {
     localStorage.setItem(ratingStorageKey, JSON.stringify(userRatings));
   }, [ratingStorageKey, userRatings]);
+
+  useEffect(() => {
+    if (visitTrackedRef.current) return;
+    visitTrackedRef.current = true;
+    recordCountryVisit(countryCode);
+  }, [countryCode]);
 
   const clearAll = () => {
     setSelectedApps([]);

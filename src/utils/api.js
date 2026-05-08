@@ -342,6 +342,73 @@ export async function fetchCountryInfo(countryCode) {
   }
 }
 
+export async function fetchPopularCountries(limit = 6) {
+  const normalizedLimit = Number.isFinite(Number(limit)) ? Math.max(1, Math.min(6, Number(limit))) : 6;
+
+  if (isBrowser) {
+    try {
+      const proxyRes = await fetch(`/api/proxy/country/popular?limit=${normalizedLimit}`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (proxyRes.ok) {
+        const proxyJson = await proxyRes.json();
+        return Array.isArray(proxyJson) ? proxyJson : [];
+      }
+    } catch {
+      // Fall through to direct API attempt.
+    }
+  }
+
+  try {
+    const res = await apiClient.get(`/country/popular/`, {
+      params: { limit: normalizedLimit },
+    });
+    return Array.isArray(res.data) ? res.data : [];
+  } catch {
+    try {
+      const proxyRes = await fetch(`/api/proxy/country/popular?limit=${normalizedLimit}`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (proxyRes.ok) {
+        const proxyJson = await proxyRes.json();
+        return Array.isArray(proxyJson) ? proxyJson : [];
+      }
+    } catch {
+      // no-op
+    }
+    return [];
+  }
+}
+
+export async function recordCountryVisit(countryCode) {
+  if (!countryCode) return null;
+
+  if (isBrowser) {
+    try {
+      const proxyRes = await fetch(`/api/proxy/country/${countryCode}/visit/`, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+      if (proxyRes.ok) {
+        return await proxyRes.json();
+      }
+    } catch {
+      // Fall through to direct API attempt.
+    }
+  }
+
+  try {
+    const res = await apiClient.post(`/country/${countryCode}/visit/`);
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the apps for a given country code */
 export async function fetchAppsByCountry(countryCode) {
   // if (!useApi) {

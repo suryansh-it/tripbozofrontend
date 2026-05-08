@@ -1,31 +1,75 @@
+
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLoader } from '@/components/LoaderContext';
-import Image from 'next/image';
+import { fetchPopularCountries } from '@/src/utils/api';
 
-const destinations = [
-{ name: 'India', image: '/flags/Agra.png' },
-{ name: 'France', image: '/flags/paris.png' },
-{ name: 'USA', image: '/flags/usa.png' },
-{ name: 'Japan', image: '/flags/japan.png' },
-{ name: 'Australia', image: '/Images/australia.png' },
-{ name: 'Italy', image: '/flags/italy.png' },
-
-
-
+const fallbackDestinations = [
+  { code: 'TH', name: 'Thailand', image: '/Images/Thailand.jpg', description: 'Discover Thailand\'s vibrant culture, street food, and stunning temples with the best travel apps for your trip.' },
+  { code: 'FR', name: 'France', image: '/Images/france.jpg', description: 'Navigate the romantic streets of Paris with apps for public transit, language translation, and more.' },
+  { code: 'US', name: 'United States', image: '/Images/usa.png', description: 'Discover apps to help you explore the United States, from subway maps to event guides.' },
+  { code: 'JP', name: 'Japan', image: '/Images/japan.png', description: 'Navigate Japan\'s blend of tradition and technology with the perfect travel apps.' },
+  { code: 'AU', name: 'Australia', image: '/Images/australia.png', description: 'Explore Australia\'s vast landscapes and vibrant cities with essential travel apps.' },
+  { code: 'IT', name: 'Italy', image: '/Images/italy.png', description: 'Discover the best apps for exploring Italy\'s rich history, art, and cuisine.' },
 ];
+
+const countryVisuals = {
+  TH: fallbackDestinations[0],
+  FR: fallbackDestinations[1],
+  US: fallbackDestinations[2],
+  JP: fallbackDestinations[3],
+  AU: fallbackDestinations[4],
+  IT: fallbackDestinations[5],
+};
 
 const PopularDestinations = () => {
   const router = useRouter();
   const { setShow } = useLoader();
+  const [destinations, setDestinations] = useState(fallbackDestinations);
+  const [loading, setLoading] = useState(true);
 
   const handleExploreClick = (countryCode) => {
     setShow(true); // Show loader before navigation
     router.push(`/country/${countryCode}`);
     // Loader will be hidden by LoaderRouteListener
   };
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const popularCountries = await fetchPopularCountries(6);
+        if (!active) return;
+
+        const mapped = (popularCountries || []).slice(0, 6).map((country, index) => {
+          const code = String(country?.code || '').toUpperCase();
+          const visual = countryVisuals[code] || {};
+          return {
+            code,
+            name: country?.name || visual.name || code || `Country ${index + 1}`,
+            image: visual.image || country?.flag || '/Images/Thailand.jpg',
+            description:
+              country?.description ||
+              visual.description ||
+              'Explore curated travel apps for this destination.',
+            visitCount: country?.visit_count || 0,
+          };
+        });
+
+        if (mapped.length > 0) {
+          setDestinations(mapped);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <section className="py-16 px-4 sm:px-6 md:px-8 bg-gray-100">
@@ -39,149 +83,32 @@ const PopularDestinations = () => {
           </span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* Destination Card 1 */}
-          <button 
-            className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
-            onClick={() => handleExploreClick('TH')}
-            aria-label="Explore Thailand Apps"
-          > 
-            <div className="absolute inset-0">
-              <Image
-                src="/Images/Thailand.jpg"
-                alt="Thailand"
-                className="absolute inset-0 object-cover"
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
-            </div>
-            <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
-              <h3 className="text-xl font-semibold mb-1">TH Thailand</h3>
-              <p className="text-xs mb-2">
-                Discover Thailand&apos;s vibrant culture, street food, and stunning temples with the best travel apps for your trip.
-              </p>
-            </div>
-          </button>
-
-          {/* Destination Card 2 */}
-          <button
-            className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
-            onClick={() => handleExploreClick('FR')}
-            aria-label="Explore France Apps"
-          >
-            <div className="absolute inset-0">
-              <Image
-                src="/Images/france.jpg"
-                alt="France"
-                className="absolute inset-0 object-cover"
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
-            </div>
-            <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
-              <h3 className="text-xl font-semibold mb-1">FR France</h3>
-              <p className="text-xs mb-2">
-                Navigate the romantic streets of Paris with apps for public transit, language translation, and more.
-              </p>
-            </div>
-          </button>
-
-          {/* Destination Card 3 */}
-          <button
-            className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
-            onClick={() => handleExploreClick('US')}
-            aria-label="Explore USA Apps"
-          >
-            <div className="absolute inset-0">
-              <Image
-                src="/Images/usa.png"
-                alt="USA"
-                className="absolute inset-0 object-cover"
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
-            </div>
-            <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
-              <h3 className="text-xl font-semibold mb-1">US USA</h3>
-              <p className="text-xs mb-2">
-                Discover apps to help you explore the United States, from subway maps to event guides.
-              </p>
-            </div>
-          </button>
-          
-          {/* Destination Card 4 */}
-          <button
-            className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
-            onClick={() => handleExploreClick('JP')}
-            aria-label="Explore Japan Apps"
-          >
-            <div className="absolute inset-0">
-              <Image
-                src="/Images/japan.png"
-                alt="Japan"
-                className="absolute inset-0 object-cover"
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
-            </div>
-            <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
-              <h3 className="text-xl font-semibold mb-1">JP Japan</h3>
-              <p className="text-xs mb-2">
-                Navigate Japan&apos;s blend of tradition and technology with the perfect travel apps.
-              </p>
-            </div>
-          </button>
-          
-          {/* Destination Card 5 */}
-          <button
-            className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
-            onClick={() => handleExploreClick('AU')}
-            aria-label="Explore Australia Apps"
-          >
-            <div className="absolute inset-0">
-              <Image
-                src="/Images/australia.png"
-                alt="Australia"
-                className="absolute inset-0 object-cover"
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
-            </div>
-            <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
-              <h3 className="text-xl font-semibold mb-1">AU Australia</h3>
-              <p className="text-xs mb-2">
-                Explore Australia&apos;s vast landscapes and vibrant cities with essential travel apps.
-              </p>
-            </div>
-          </button>
-          
-          {/* Destination Card 6 */}
-          <button
-            className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
-            onClick={() => handleExploreClick('IT')}
-            aria-label="Explore Italy Apps"
-          >
-            <div className="absolute inset-0">
-              <Image
-                src="/Images/italy.png"
-                alt="Italy"
-                className="absolute inset-0 object-cover"
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
-            </div>
-            <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
-              <h3 className="text-xl font-semibold mb-1">IT Italy</h3>
-              <p className="text-xs mb-2">
-                Discover the best apps for exploring Italy&apos;s rich history, art, and cuisine.
-              </p>
-            </div>
-          </button>
+          {(loading ? fallbackDestinations : destinations).map((destination, index) => (
+            <button
+              key={`${destination.code}-${index}`}
+              className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
+              onClick={() => handleExploreClick(destination.code)}
+              aria-label={`Explore ${destination.name} apps`}
+            >
+              <div className="absolute inset-0">
+                <img
+                  src={destination.image}
+                  alt={destination.name}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
+              </div>
+              <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
+                <h3 className="text-xl font-semibold mb-1">{destination.code} {destination.name}</h3>
+                <p className="text-xs mb-2">
+                  {destination.description}
+                </p>
+                <p className="text-[11px] uppercase tracking-[0.2em] text-teal-100/90">
+                  {destination.visitCount ? `${destination.visitCount.toLocaleString()} visits` : 'Trending now'}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </section>
