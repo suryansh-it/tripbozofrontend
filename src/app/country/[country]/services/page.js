@@ -143,13 +143,21 @@ export default function CountryServicesPage() {
                 Use this page like a quick comparison marketplace: pick a section, shortlist providers, and compare side by side before choosing.
               </p>
             </div>
-            <Link
-              href={`/country/${countryCode}`}
-              className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 transition hover:border-cyan-300 hover:bg-cyan-50"
-            >
-              <FaArrowLeft />
-              <span className="ml-2 hidden sm:inline">Apps</span>
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/country/${countryCode}/Essentials`}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-cyan-200 bg-white px-3.5 text-sm font-semibold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-50"
+              >
+                Essentials
+              </Link>
+              <Link
+                href={`/country/${countryCode}`}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-800 transition hover:border-cyan-300 hover:bg-cyan-50"
+              >
+                <FaArrowLeft />
+                <span className="ml-2 hidden sm:inline">Apps</span>
+              </Link>
+            </div>
           </div>
         </header>
 
