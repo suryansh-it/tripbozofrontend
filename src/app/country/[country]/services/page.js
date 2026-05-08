@@ -12,11 +12,9 @@ import {
   FaArrowLeft,
   FaCheckCircle,
   FaExternalLinkAlt,
-  FaRegBookmark,
-  FaBookmark,
 } from "react-icons/fa";
 import ScrollNavButtons from "@/components/ScrollNavButtons";
-import { addBookmark, fetchCountryInfo, fetchUserBookmarks, removeBookmark } from "@/src/utils/api";
+import { fetchCountryInfo } from "@/src/utils/api";
 
 const SERVICE_DATA = {
   esim: {
@@ -79,7 +77,6 @@ export default function CountryServicesPage() {
   const { country } = useParams();
   const countryCode = String(country || "").toUpperCase();
   const [countryInfo, setCountryInfo] = useState(null);
-  const [bookmarkId, setBookmarkId] = useState(null);
   const [selectedSection, setSelectedSection] = useState("esim");
   const [selectedProviders, setSelectedProviders] = useState([]);
 
@@ -93,17 +90,9 @@ export default function CountryServicesPage() {
         const info = await fetchCountryInfo(countryCode);
         if (!mounted) return;
         setCountryInfo(info || null);
-
-        const bookmarks = await fetchUserBookmarks("country");
-        if (!mounted) return;
-        const match = Array.isArray(bookmarks)
-          ? bookmarks.find((item) => String(item?.country) === String(info?.id))
-          : null;
-        setBookmarkId(match?.id || null);
       } catch {
         if (!mounted) return;
         setCountryInfo(null);
-        setBookmarkId(null);
       }
     };
 
@@ -112,25 +101,6 @@ export default function CountryServicesPage() {
       mounted = false;
     };
   }, [countryCode]);
-
-  const toggleCountryBookmark = async () => {
-    if (!countryInfo?.id) return;
-
-    if (bookmarkId) {
-      const ok = await removeBookmark(bookmarkId);
-      if (ok) {
-        setBookmarkId(null);
-        window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId: countryInfo.id } }));
-      }
-      return;
-    }
-
-    const res = await addBookmark("country", countryInfo.id, null);
-    if (res?.id) {
-      setBookmarkId(res.id);
-      window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId: countryInfo.id } }));
-    }
-  };
 
   const comparisonRows = useMemo(() => {
     const all = section.providers.filter((provider) => selectedProviders.includes(provider.name));
@@ -165,19 +135,6 @@ export default function CountryServicesPage() {
                 <h1 className="text-2xl font-bold text-slate-950 sm:text-4xl">
                   {countryInfo?.name || countryCode}
                 </h1>
-                <button
-                  type="button"
-                  onClick={toggleCountryBookmark}
-                  title={bookmarkId ? "Remove bookmark" : "Bookmark country"}
-                  aria-label={bookmarkId ? "Remove bookmark" : "Bookmark country"}
-                  className={`inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border transition active:scale-95 ${
-                    bookmarkId
-                      ? "border-teal-300 bg-teal-500 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-cyan-200 hover:bg-cyan-50"
-                  }`}
-                >
-                  {bookmarkId ? <FaBookmark /> : <FaRegBookmark />}
-                </button>
                 <span className="hidden rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 sm:inline-flex">
                   {countryInfo?.code || countryCode}
                 </span>

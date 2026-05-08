@@ -846,13 +846,29 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     
         <div className="relative w-[94vw] max-w-[1920px] mx-auto px-3 sm:px-6 md:px-10 lg:px-14 flex flex-col justify-center h-full z-10"> 
                  {/* ✅ Dynamically show code, name and description from `countryInfo` */}
-         <div className="flex items-center gap-1 sm:gap-4 md:gap-6 mb-1 sm:mb-2 mt-3 sm:mt-6 md:mt-8">
+         <div className="flex flex-wrap items-center gap-2 sm:gap-4 md:gap-6 mb-1 sm:mb-2 mt-3 sm:mt-6 md:mt-8">
            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-white/80">
              {countryInfo.code}
            </span>
-           <span className="text-2xl sm:text-4xl md:text-5xl font-black text-white ml-1 sm:ml-3 drop-shadow-lg leading-tight">
-             {countryInfo.name}
-           </span>
+           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+             <span className="text-2xl sm:text-4xl md:text-5xl font-black text-white ml-1 sm:ml-3 drop-shadow-lg leading-tight">
+               {countryInfo.name}
+             </span>
+             <button
+               type="button"
+               onClick={(e) => { e.stopPropagation(); toggleCountryBookmark(); }}
+               className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm ${
+                 bookmarkMap.country?.[countryInfo?.id]
+                   ? "border-black bg-black text-white shadow-black/20"
+                   : "border-slate-200 bg-white text-slate-800 hover:border-black hover:bg-slate-50 hover:text-black"
+               }`}
+               title={bookmarkMap.country?.[countryInfo?.id] ? 'Remove bookmark' : 'Bookmark country'}
+               aria-label={bookmarkMap.country?.[countryInfo?.id] ? 'Remove bookmark' : 'Bookmark country'}
+             >
+               {bookmarkMap.country?.[countryInfo?.id] ? <FaBookmark className="text-white" /> : <FaRegBookmark className="text-slate-600" />}
+               <span className="hidden sm:inline">{bookmarkMap.country?.[countryInfo?.id] ? 'Bookmarked' : 'Bookmark'}</span>
+             </button>
+           </div>
          </div>
          <p className="text-sm sm:text-lg md:text-2xl max-w-4xl text-white/90 font-normal mb-3 sm:mb-4 mt-1 drop-shadow line-clamp-3 sm:line-clamp-none">
            {countryInfo.description}
@@ -861,22 +877,6 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
             className="h-1 w-28 bg-[#2ad2c9] rounded"
             style={{ width: "7rem" }}
           ></div>
-           <div className="mt-3">
-             <button
-               type="button"
-               onClick={(e) => { e.stopPropagation(); toggleCountryBookmark(); }}
-               className={`inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm ${
-                 bookmarkMap.country?.[countryInfo?.id]
-                   ? "border-teal-300 bg-teal-500 text-white shadow-teal-200 hover:bg-teal-600"
-                   : "border-slate-200 bg-white text-slate-800 hover:border-cyan-200 hover:bg-cyan-50"
-               }`}
-               title={bookmarkMap.country?.[countryInfo?.id] ? 'Remove bookmark' : 'Bookmark country'}
-               aria-label={bookmarkMap.country?.[countryInfo?.id] ? 'Remove bookmark' : 'Bookmark country'}
-             >
-               {bookmarkMap.country?.[countryInfo?.id] ? <FaBookmark className="text-white" /> : <FaRegBookmark className="text-slate-600" />}
-               <span className="hidden sm:inline">{bookmarkMap.country?.[countryInfo?.id] ? 'Saved country' : 'Save country'}</span>
-             </button>
-           </div>
         </div>
       </div>
       {/* Search & Filter (overlapping hero) */}
