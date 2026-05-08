@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { FiCopy, FiDownload, FiShare2, FiLink } from "react-icons/fi";
 import { saveAs } from "file-saver";
+import { SkeletonCard, SkeletonSection } from "@/components/Skeletons";
 
 import {
   initSession,
@@ -107,9 +108,42 @@ if (typeof window.gtag === "function") {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-600">Loading your bundle…</p>
-      </div>
+      <main className="bg-gray-50 min-h-screen py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Back button skeleton */}
+          <div className="h-6 w-32 rounded-lg bg-slate-100 animate-pulse mb-6" />
+          
+          {/* Title skeleton */}
+          <div className="h-8 w-64 rounded-lg bg-slate-100 animate-pulse mb-4 mx-auto" />
+          <div className="h-4 w-full max-w-sm rounded-lg bg-slate-100 animate-pulse mb-8 mx-auto" />
+          
+          {/* Content skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* QR section skeleton */}
+            <div className="bg-white p-8 rounded-xl shadow animate-pulse">
+              <div className="w-72 h-72 bg-slate-100 rounded-lg flex items-center justify-center mb-6 mx-auto" />
+              <div className="grid grid-cols-2 gap-4 w-full">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-10 bg-slate-100 rounded-lg" />
+                ))}
+              </div>
+            </div>
+            
+            {/* Right section skeleton */}
+            <div className="space-y-6">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="bg-white p-4 rounded-xl shadow">
+                  <div className="h-6 w-40 bg-slate-100 rounded-lg mb-3" />
+                  <div className="space-y-2">
+                    <div className="h-4 bg-slate-100 rounded-lg w-full" />
+                    <div className="h-4 bg-slate-100 rounded-lg w-5/6" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
     );
   }
   if (!apps.length) {
