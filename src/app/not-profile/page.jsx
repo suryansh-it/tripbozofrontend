@@ -351,7 +351,6 @@ export default function ProfilePage() {
         <aside className="w-full lg:flex-1 rounded-[2rem] border border-white/70 bg-white/85 p-6 sm:p-8 shadow-[0_24px_70px_rgba(15,118,110,0.08)] backdrop-blur-xl">
           <ProfileRightPanel />
         </aside>
-        </aside>
       </div>
     </main>
   );

@@ -182,8 +182,6 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
   const [expandedId, setExpandedId] = useState(null);
   const [ratingPickerFor, setRatingPickerFor] = useState(null);
   const [openSentimentPanels, setOpenSentimentPanels] = useState([]);
-  const [bookmarkedAppIds, setBookmarkedAppIds] = useState(() => new Set());
-  const [bookmarkedCountryId, setBookmarkedCountryId] = useState(null);
   const [bookmarkMap, setBookmarkMap] = useState({ app: {}, country: {} });
   const [liveTravelUpdates, setLiveTravelUpdates] = useState(() => travelUpdates || []);
   const [liveTravelSignal, setLiveTravelSignal] = useState(() => travelSignal || {});
@@ -278,28 +276,14 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     setLiveTravelWeather(travelWeather || {});
   }, [countryCode, travelUpdates, travelSignal, travelWeather]);
 
-  // Load user's bookmarks (apps + country) on mount
+  // Load user's country bookmarks on mount
   useEffect(() => {
     let mounted = true;
     const loadBookmarks = async () => {
       try {
-        const [appBms, countryBms] = await Promise.all([
-          fetchUserBookmarks("app"),
-          fetchUserBookmarks("country"),
-        ]);
+        const countryBms = await fetchUserBookmarks("country");
 
         if (!mounted) return;
-
-        const appSet = new Set();
-        const appMap = {};
-        if (Array.isArray(appBms)) {
-          appBms.forEach((bm) => {
-            if (bm.app) {
-              appSet.add(bm.app);
-              appMap[bm.app] = bm.id;
-            }
-          });
-        }
 
         const countryMap = {};
         if (Array.isArray(countryBms)) {
@@ -310,11 +294,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
           });
         }
 
-        setBookmarkedAppIds(appSet);
-        setBookmarkMap({ app: appMap, country: countryMap });
-        // mark if this country is bookmarked
-        const countryId = countryInfo?.id || null;
-        if (countryId && countryMap[countryId]) setBookmarkedCountryId(countryId);
+        setBookmarkMap({ app: {}, country: countryMap });
       } catch (err) {
         // ignore
       }
@@ -326,32 +306,6 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
     };
   }, [countryInfo]);
 
-  const toggleAppBookmark = async (app) => {
-    if (!app || !app.id) return;
-    const isBookmarked = bookmarkedAppIds.has(app.id);
-    if (isBookmarked) {
-      // remove
-      const bmId = bookmarkMap.app?.[app.id];
-      if (!bmId) return;
-      const ok = await removeBookmark(bmId);
-      if (ok) {
-        setBookmarkedAppIds((prev) => {
-          const copy = new Set(prev);
-          copy.delete(app.id);
-          return copy;
-        });
-        setBookmarkMap((prev) => ({ ...prev, app: { ...prev.app, [app.id]: undefined } }));
-      }
-    } else {
-      // add
-      const res = await addBookmark("app", null, app.id);
-      if (res && res.id) {
-        setBookmarkedAppIds((prev) => new Set(prev).add(app.id));
-        setBookmarkMap((prev) => ({ ...prev, app: { ...prev.app, [app.id]: res.id } }));
-      }
-    }
-  };
-
   const toggleCountryBookmark = async () => {
     const countryId = countryInfo?.id;
     if (!countryId) return;
@@ -361,13 +315,17 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
       const ok = await removeBookmark(bmId);
       if (ok) {
         setBookmarkMap((prev) => ({ ...prev, country: { ...prev.country, [countryId]: undefined } }));
-        setBookmarkedCountryId(null);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId } }));
+        }
       }
     } else {
       const res = await addBookmark("country", countryId, null);
       if (res && res.id) {
         setBookmarkMap((prev) => ({ ...prev, country: { ...prev.country, [countryId]: res.id } }));
-        setBookmarkedCountryId(countryId);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId } }));
+        }
       }
     }
   };
@@ -1153,14 +1111,6 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
                       aria-label="Share app"
                     >
                       <FaShare className="text-sm" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleAppBookmark(app); }}
-                      className={`w-10 h-10 rounded-full border transition-all duration-150 flex items-center justify-center ${bookmarkedAppIds.has(app.id) ? 'bg-teal-400 border-teal-400 text-white' : 'bg-white border-cyan-200 text-[#2ad2c9] hover:bg-cyan-50'}`}
-                      title={bookmarkedAppIds.has(app.id) ? 'Remove bookmark' : 'Bookmark app'}
-                      aria-label={bookmarkedAppIds.has(app.id) ? 'Remove bookmark' : 'Bookmark app'}
-                    >
-                      {bookmarkedAppIds.has(app.id) ? <FaBookmark /> : <FaRegBookmark />}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleSelect(app.id); }}

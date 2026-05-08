@@ -4,11 +4,10 @@
 import { useEffect, useState } from "react";
 import { FiMapPin, FiBookmark, FiStar, FiTrendingUp, FiGlobe, FiClock } from "react-icons/fi";
 import Image from "next/image";
-import { fetchProfileStats, fetchUserBookmarks } from "@/src/utils/api";
+import { fetchProfileStats } from "@/src/utils/api";
 
 export default function ProfileRightPanel() {
   const [stats, setStats] = useState(null);
-  const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,13 +17,8 @@ export default function ProfileRightPanel() {
       setError(null);
 
       try {
-        const [statsData, bookmarksData] = await Promise.all([
-          fetchProfileStats(),
-          fetchUserBookmarks("country"),
-        ]);
-
+        const statsData = await fetchProfileStats();
         setStats(statsData);
-        setBookmarks(Array.isArray(bookmarksData) ? bookmarksData : []);
       } catch (err) {
         setError("Failed to load profile data");
         console.error(err);
@@ -34,6 +28,20 @@ export default function ProfileRightPanel() {
     };
 
     loadProfileData();
+
+    const handleBookmarksUpdated = () => {
+      loadProfileData();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("bookmarks-updated", handleBookmarksUpdated);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("bookmarks-updated", handleBookmarksUpdated);
+      }
+    };
   }, []);
 
   if (loading) {
