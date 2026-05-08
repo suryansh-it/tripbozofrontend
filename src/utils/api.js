@@ -616,3 +616,110 @@ export async function updateUserOriginCountryPreference(originCountryCode = "") 
     return null;
   }
 }
+
+/**
+ * Fetch user profile stats: visit history, bookmark counts, recent bookmarks
+ */
+export async function fetchProfileStats() {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return null;
+
+  if (isBrowser) {
+    try {
+      const proxyRes = await fetch(`/api/proxy/auth/profile/stats/`, {
+        method: "GET",
+        headers: { Accept: "application/json", ...headers },
+        cache: "no-store",
+      });
+      if (proxyRes.ok) {
+        return await proxyRes.json();
+      }
+    } catch {
+      // Fall through to direct API attempt
+    }
+  }
+
+  try {
+    const res = await apiClient.get(`/auth/profile/stats/`, { headers });
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch user's bookmarks (filtered by type: 'country', 'app', or all)
+ */
+export async function fetchUserBookmarks(type = null) {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return [];
+
+  if (isBrowser) {
+    try {
+      const url = type 
+        ? `/api/proxy/auth/bookmarks/?type=${type}`
+        : `/api/proxy/auth/bookmarks/`;
+      const proxyRes = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json", ...headers },
+        cache: "no-store",
+      });
+      if (proxyRes.ok) {
+        const data = await proxyRes.json();
+        return Array.isArray(data) ? data : [];
+      }
+    } catch {
+      // Fall through to direct API attempt
+    }
+  }
+
+  try {
+    const url = type 
+      ? `/auth/bookmarks/?type=${type}`
+      : `/auth/bookmarks/`;
+    const res = await apiClient.get(url, { headers });
+    return Array.isArray(res.data) ? res.data : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Add a bookmark for a country or app
+ */
+export async function addBookmark(bookmarkType, countryId = null, appId = null) {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return null;
+
+  try {
+    const res = await apiClient.post(
+      `/auth/bookmarks/create/`,
+      {
+        bookmark_type: bookmarkType,
+        country_id: countryId,
+        app_id: appId,
+      },
+      { headers }
+    );
+    return res?.data || null;
+  } catch (err) {
+    console.warn("Failed to add bookmark:", err);
+    return null;
+  }
+}
+
+/**
+ * Remove a bookmark by ID
+ */
+export async function removeBookmark(bookmarkId) {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return false;
+
+  try {
+    await apiClient.delete(`/auth/bookmarks/${bookmarkId}/delete/`, { headers });
+    return true;
+  } catch (err) {
+    console.warn("Failed to remove bookmark:", err);
+    return false;
+  }
+}

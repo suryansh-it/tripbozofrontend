@@ -6,6 +6,7 @@ import Link from "next/link";
 import axios from "axios";
 import { FiEdit3, FiLogOut, FiMapPin, FiShield, FiUser, FiArrowRight } from "react-icons/fi";
 import { fetchUserOriginCountryPreference } from "@/src/utils/api";
+import ProfileRightPanel from "@/components/profile/ProfileRightPanel";
 
 const emptyProfile = {
   name: "",
@@ -348,56 +349,8 @@ export default function ProfilePage() {
         </section>
 
         <aside className="w-full lg:flex-1 rounded-[2rem] border border-white/70 bg-white/85 p-6 sm:p-8 shadow-[0_24px_70px_rgba(15,118,110,0.08)] backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">Quick actions</p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-950">Travel tools at a glance</h2>
-            </div>
-            <div className="rounded-2xl bg-cyan-50 px-3 py-2 text-cyan-700 ring-1 ring-cyan-100">
-              <FiShield size={20} />
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {[
-              {
-                title: "Origin-aware Essentials",
-                text: "Your saved origin country powers embassy, consular, and local assistance details.",
-              },
-              {
-                title: "Live travel updates",
-                text: "Track advisories, weather, and travel changes without hunting across the web.",
-              },
-              {
-                title: "Bundle ready",
-                text: "Use curated app bundles to install the right travel stack faster.",
-              },
-              {
-                title: "Keep it private",
-                text: "Your profile data stays tied to your account and saved preferences.",
-              },
-            ].map((item) => (
-              <div key={item.title} className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-950">{item.title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/Onboarding?step=origin-country#origin-country-selector"
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Open onboarding <FiArrowRight />
-            </Link>
-            <Link
-              href="/"
-              className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:border-cyan-200 hover:bg-cyan-50"
-            >
-              Back to home
-            </Link>
-          </div>
+          <ProfileRightPanel />
+        </aside>
         </aside>
       </div>
     </main>
