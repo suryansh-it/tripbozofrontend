@@ -26,6 +26,21 @@ export default function BundleRedirectPage({ params }) {
     }
   }, []);
 
+  // If backend redirect is available, immediately forward the scanner to it
+  useEffect(() => {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const backendBase = apiBase.replace(/\/api\/?$/i, "") || process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "";
+      if (backendBase) {
+        const redirectUrl = `${backendBase}/personalized-list/bundle-redirect/${sessionId}/`;
+        window.location.replace(redirectUrl);
+        return; // stop further client logic
+      }
+    } catch (e) {
+      // ignore and fall back to client-side behavior
+    }
+  }, [sessionId]);
+
   // fetch raw items
   useEffect(() => {
     (async () => {
