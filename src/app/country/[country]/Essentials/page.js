@@ -248,6 +248,37 @@ export default function EssentialsPage() {
       )
   );
 
+  const essentialsSummary = [
+    {
+      label: "Emergency contacts",
+      value: emergencies.length,
+      tone: "from-rose-500 to-orange-500",
+      chip: "bg-rose-50 text-rose-700 border-rose-200",
+      href: "#emergency-contacts",
+    },
+    {
+      label: "Local phrases",
+      value: phrases.length,
+      tone: "from-sky-500 to-cyan-500",
+      chip: "bg-sky-50 text-sky-700 border-sky-200",
+      href: "#local-phrases",
+    },
+    {
+      label: "Useful tips",
+      value: tips.length,
+      tone: "from-amber-500 to-yellow-500",
+      chip: "bg-amber-50 text-amber-800 border-amber-200",
+      href: "#useful-tips",
+    },
+    {
+      label: "Embassy support",
+      value: hasOriginAssistanceDetails ? "Ready" : "Setup",
+      tone: "from-indigo-500 to-violet-500",
+      chip: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      href: "#country-assistance",
+    },
+  ];
+
   const getSpeechLang = (countryCode) => {
     const map = {
       // All 30 countries with proper language codes for TTS
@@ -524,25 +555,28 @@ export default function EssentialsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#e0f7fa] via-[#f5fafd] to-[#e3f2fd]">
-        <div className="w-full bg-gradient-to-r from-[#38bdf8] via-[#2ad2c9] to-[#5eead4] py-12 text-white shadow-xl">
-          <div className="mx-auto flex max-w-2xl flex-col items-center px-4 text-center">
-            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white/35 bg-white/20">
-              <span className="h-10 w-10 animate-spin rounded-full border-4 border-white/40 border-t-white" aria-hidden="true" />
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(45,212,191,0.14),_transparent_24%),linear-gradient(180deg,#f8fcff_0%,#eefbff_100%)]">
+        <div className="w-full bg-gradient-to-r from-[#0f172a] via-[#0ea5e9] to-[#14b8a6] py-14 text-white shadow-[0_20px_60px_rgba(15,118,110,0.28)]">
+          <div className="mx-auto flex max-w-3xl flex-col items-center px-4 text-center">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl border border-white/30 bg-white/15 shadow-lg">
+              <span className="h-10 w-10 animate-spin rounded-full border-4 border-white/35 border-t-white" aria-hidden="true" />
             </div>
-            <h1 className="text-3xl font-extrabold md:text-4xl">Loading Essentials</h1>
-            <p className="mt-3 text-white/90">
+            <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/85">
+              Offline travel essentials
+            </span>
+            <h1 className="mt-4 text-3xl font-extrabold md:text-5xl">Loading Essentials</h1>
+            <p className="mt-3 max-w-2xl text-sm text-white/90 sm:text-base md:text-lg">
               Fetching emergency contacts, useful phrases, and country assistance for {countryName || country?.toUpperCase()}.
             </p>
           </div>
         </div>
 
-        <div className="mx-auto max-w-4xl px-4 py-10">
-          <div className="grid animate-pulse gap-6 md:grid-cols-2">
-            <div className="h-40 rounded-3xl border-l-8 border-indigo-300 bg-white/90 shadow-md" />
-            <div className="h-40 rounded-3xl border-l-8 border-teal-300 bg-white/90 shadow-md" />
-            <div className="h-40 rounded-3xl border-l-8 border-amber-300 bg-white/90 shadow-md" />
-            <div className="h-40 rounded-3xl border-l-8 border-cyan-300 bg-white/90 shadow-md" />
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="grid animate-pulse gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
+            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
+            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
+            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
           </div>
         </div>
       </div>
@@ -551,35 +585,98 @@ export default function EssentialsPage() {
 
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-[#e0f7fa] via-[#f5fafd] to-[#e3f2fd] animate-fade-in">
+    <div className="w-full min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(45,212,191,0.12),_transparent_24%),linear-gradient(180deg,#f8fcff_0%,#eefbff_100%)] animate-fade-in">
       {/* Hero Header */}
-      <div className="w-full bg-gradient-to-r from-[#38bdf8] via-[#2ad2c9] to-[#5eead4] text-white py-12 flex flex-col items-center shadow-xl animate-fade-in-up">
-        <div className="flex flex-col items-center max-w-2xl mx-auto">
-          <div className="flex items-center justify-center w-24 h-24 rounded-2xl bg-white/20 border-4 border-white/30 shadow-lg mb-4">
-            <span className="text-6xl">🌏</span>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#155e75] to-[#0f766e] opacity-95" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_26%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.12),_transparent_22%)]" />
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-14 lg:px-6">
+          <div className="grid items-end gap-6 lg:grid-cols-[1.15fr,0.85fr]">
+            <div className="max-w-3xl text-white">
+              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/85">
+                Offline-ready essentials
+              </span>
+              <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Travel Essentials
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm text-white/85 sm:text-base lg:text-lg">
+                Emergency contacts, key phrases, embassy support, and practical safety notes for <span className="font-bold text-white underline decoration-white/40 underline-offset-4">{countryName}</span>.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">Offline quick access</span>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">Tap-to-call contacts</span>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">Speak phrases aloud</span>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-white/15 bg-white/10 p-4 text-white shadow-[0_24px_80px_rgba(15,118,110,0.25)] backdrop-blur-xl sm:p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-3xl shadow-inner">🌏</div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Current country</p>
+                  <p className="text-2xl font-bold">{countryName}</p>
+                  <p className="text-sm text-white/75">Prepared for mobile use and quick decisions.</p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                {essentialsSummary.slice(0, 2).map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="rounded-2xl border border-white/15 bg-white/10 p-3 transition hover:-translate-y-0.5 hover:bg-white/15"
+                  >
+                    <div className="text-xs uppercase tracking-[0.16em] text-white/70">{item.label}</div>
+                    <div className="mt-1 text-2xl font-bold">{item.value}</div>
+                  </a>
+                ))}
+              </div>
+
+              <div className="mt-4 flex gap-3">
+                <Link
+                  href={`/country/${country?.toUpperCase()}/services`}
+                  className="inline-flex flex-1 items-center justify-center rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
+                >
+                  Compare services
+                </Link>
+              </div>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-3 drop-shadow text-center">
-            Travel Essentials
-          </h1>
-          <p className="text-white/90 max-w-2xl text-lg font-medium drop-shadow-sm text-center">
-            Offline emergency info, key phrases & safety tips for{" "}
-            <span className="capitalize font-bold underline underline-offset-4">
-            {countryName}
-            </span>
-            .
-          </p>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 mt-8 animate-fade-in-up">
-        <div className="rounded-3xl border border-cyan-200 bg-white/90 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="mx-auto max-w-6xl px-4 pt-5 sm:pt-8">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {essentialsSummary.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className="group rounded-3xl border border-white/70 bg-white/90 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(15,23,42,0.1)]"
+            >
+              <div className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${item.chip}`}>
+                {item.label}
+              </div>
+              <div className="mt-3 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-3xl font-black text-slate-950">{item.value}</p>
+                  <p className="mt-1 text-sm text-slate-600">Jump to section</p>
+                </div>
+                <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${item.tone} opacity-90 shadow-lg`} />
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div className="mx-auto mt-6 max-w-6xl px-4 sm:mt-8">
+        <div className="rounded-3xl border border-cyan-200 bg-white/90 p-4 shadow-sm sm:p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700">Need eSIM, insurance or booking comparisons?</p>
-            <p className="mt-1 text-sm text-slate-700">Use the dedicated compare page for providers, pricing snapshots, and feature side-by-side view.</p>
+            <p className="mt-1 text-sm text-slate-700">Use the dedicated compare page for providers, pricing snapshots, and side-by-side features.</p>
           </div>
           <Link
             href={`/country/${country?.toUpperCase()}/services`}
-            className="inline-flex items-center justify-center rounded-full bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 transition"
+            className="inline-flex items-center justify-center rounded-full bg-cyan-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700"
           >
             Open Services Compare
           </Link>
@@ -587,13 +684,16 @@ export default function EssentialsPage() {
       </div>
 
 
-
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-12 space-y-12">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10 lg:py-12 space-y-8 sm:space-y-10">
 
-        <section className="bg-indigo-50 p-6 sm:p-8 rounded-3xl shadow-md border-l-8 border-indigo-400 animate-fade-in-up">
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <h2 className="text-xl sm:text-2xl font-bold text-indigo-900">Your Country Assistance</h2>
+        <section id="country-assistance" className="overflow-hidden rounded-3xl border border-indigo-100 bg-white/90 shadow-[0_16px_50px_rgba(79,70,229,0.08)] animate-fade-in-up">
+          <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-cyan-50 px-5 py-4 sm:px-6 sm:py-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">Personalized support</p>
+                <h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">Your Country Assistance</h2>
+              </div>
             <div className="flex items-center gap-2">
               {originCountry?.code && (
                 <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
@@ -609,74 +709,90 @@ export default function EssentialsPage() {
                 <FaDownload className="text-sm" />
               </button>
             </div>
+            </div>
           </div>
 
           {originCountry ? (
-            <div className="space-y-3 text-sm sm:text-base text-indigo-950">
+            <div className="space-y-4 px-5 py-5 sm:px-6 text-sm sm:text-base text-indigo-950">
               <p>
                 Traveling from <strong>{originCountry.name}</strong> to <strong>{countryName}</strong>. Contact your consular support team:
               </p>
               {isAssistanceLoading ? (
-                <div className="rounded-lg border border-indigo-200 bg-white/70 px-3 py-2 text-indigo-900">
+                <div className="rounded-2xl border border-indigo-200 bg-white/80 px-4 py-3 text-indigo-900">
                   Loading your origin-country consular support details...
                 </div>
               ) : hasOriginAssistanceDetails ? (
-                <>
-                  <p>
-                    <span className="font-semibold">Agency:</span> {originAssistance.label}
-                  </p>
-                  <p>
-                    <span className="font-semibold">24/7 Emergency:</span>{" "}
-                    {String(originAssistance.emergency_phone || "").startsWith("+") ? (
-                      <a href={`tel:${originAssistance.emergency_phone}`} className="underline font-semibold hover:text-indigo-700">
-                        {originAssistance.emergency_phone}
-                      </a>
-                    ) : (
-                      <span>{originAssistance.emergency_phone || "Not available"}</span>
+                <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+                  <div className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 sm:p-5">
+                    <p>
+                      <span className="font-semibold">Agency:</span> {originAssistance.label}
+                    </p>
+                    <p className="mt-2">
+                      <span className="font-semibold">24/7 Emergency:</span>{" "}
+                      {String(originAssistance.emergency_phone || "").startsWith("+") ? (
+                        <a href={`tel:${originAssistance.emergency_phone}`} className="underline font-semibold hover:text-indigo-700">
+                          {originAssistance.emergency_phone}
+                        </a>
+                      ) : (
+                        <span>{originAssistance.emergency_phone || "Not available"}</span>
+                      )}
+                    </p>
+                    {originAssistance.emergency_phone_intl && (
+                      <p className="mt-2">
+                        <span className="font-semibold">International Emergency:</span>{" "}
+                        <a href={`tel:${originAssistance.emergency_phone_intl}`} className="underline font-semibold hover:text-indigo-700">
+                          {originAssistance.emergency_phone_intl}
+                        </a>
+                      </p>
                     )}
-                  </p>
-                  {originAssistance.emergency_phone_intl && (
-                    <p>
-                      <span className="font-semibold">International Emergency:</span>{" "}
-                      <a href={`tel:${originAssistance.emergency_phone_intl}`} className="underline font-semibold hover:text-indigo-700">
-                        {originAssistance.emergency_phone_intl}
-                      </a>
-                    </p>
-                  )}
-                  {originAssistance.consular_address && (
-                    <p>
-                      <span className="font-semibold">Consular Office Address:</span> {originAssistance.consular_address}
-                    </p>
-                  )}
-                </>
+                    {originAssistance.consular_address && (
+                      <p className="mt-2">
+                        <span className="font-semibold">Consular Office Address:</span> {originAssistance.consular_address}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border border-indigo-200 bg-white p-4 sm:p-5 shadow-sm">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-indigo-700">Emergency Guidelines</h3>
+                    <ul className="mt-3 space-y-2 text-sm text-indigo-950">
+                      {emergencyGuidelines.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[11px] font-bold text-indigo-700">{idx + 1}</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               ) : !destinationEmbassyContact ? (
-                <div className="rounded-lg border border-indigo-200 bg-white/70 px-3 py-2 text-indigo-900">
+                <div className="rounded-2xl border border-indigo-200 bg-white/80 px-4 py-3 text-indigo-900">
                   We are still loading your verified consular support details for {originCountry.code}. Please refresh this page in a few seconds.
                 </div>
               ) : null}
-              <p>
-                <span className="font-semibold">Destination Embassy/Consular Desk:</span>{" "}
-                {destinationEmbassyContact ? (
-                  <span>
-                    {destinationEmbassyContact.phone ? (
-                      <>
+              <div className="rounded-2xl border border-indigo-100 bg-white p-4 sm:p-5 shadow-sm">
+                <p>
+                  <span className="font-semibold">Destination Embassy/Consular Desk:</span>{" "}
+                  {destinationEmbassyContact ? (
+                    <span>
+                      {destinationEmbassyContact.phone ? (
                         <a href={`tel:${destinationEmbassyContact.phone}`} className="underline font-semibold hover:text-indigo-700">
                           {destinationEmbassyContact.phone}
                         </a>
-                      </>
-                    ) : (
-                      <span>Phone not listed</span>
-                    )}
-                  </span>
-                ) : (
-                  <span>Not listed</span>
-                )}
-              </p>
-              {destinationEmbassyContact?.address && (
-                <p>
-                  <span className="font-semibold">Destination Embassy Address:</span> {destinationEmbassyContact.address}
+                      ) : (
+                        <span>Phone not listed</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span>Not listed</span>
+                  )}
                 </p>
-              )}
+                {destinationEmbassyContact?.address && (
+                  <p className="mt-2">
+                    <span className="font-semibold">Destination Embassy Address:</span> {destinationEmbassyContact.address}
+                  </p>
+                )}
+              </div>
+
               <div className="flex flex-wrap gap-3 pt-1">
                 {originAssistance?.website && (
                   <a
@@ -699,18 +815,6 @@ export default function EssentialsPage() {
                   </a>
                 )}
               </div>
-
-              <div className="rounded-xl bg-white/70 border border-indigo-200 p-4 mt-2">
-                <h3 className="text-sm sm:text-base font-bold text-indigo-900 mb-2">Emergency Guidelines</h3>
-                <ul className="space-y-1 text-sm text-indigo-950">
-                  {emergencyGuidelines.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="font-bold text-indigo-700">{idx + 1}.</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
           ) : (
             <div className="space-y-2 text-sm sm:text-base text-indigo-950">
@@ -722,158 +826,161 @@ export default function EssentialsPage() {
           )}
         </section>
 
- {/* Brown Divider - Added before Emergency Contacts */}
- <div className="h-px bg-gradient-to-r from-amber-800 via-amber-600 to-amber-700 opacity-40" />
-
-
-        {/* Emergency Contacts */}
-        <section className="bg-white p-8 rounded-3xl shadow-md border-l-8 border-teal-400 animate-fade-in-up">
-          <div className="flex items-center justify-between gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-teal-700 flex items-center gap-2">
-              {/* phone icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-teal-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.07 4.18 2 2 0 015.18 2h3a2 2 0 011.72 2.18 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
-              </svg>
-              Emergency Contacts
-            </h2>
+        <section id="emergency-contacts" className="overflow-hidden rounded-3xl border border-teal-100 bg-white/90 shadow-[0_16px_50px_rgba(20,184,166,0.08)] animate-fade-in-up">
+          <div className="flex items-center justify-between gap-3 border-b border-teal-100 bg-gradient-to-r from-teal-50 to-white px-5 py-4 sm:px-6 sm:py-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Tap to call</p>
+              <h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">Emergency Contacts</h2>
+            </div>
             <button
               onClick={() => downloadSection("emergencies")}
               title="Download emergency contacts"
               aria-label="Download emergency contacts"
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100 text-teal-700 transition hover:bg-teal-200"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-teal-600 text-white transition hover:bg-teal-700"
             >
               <FaDownload className="text-sm" />
             </button>
           </div>
-          <ul className="grid md:grid-cols-2 gap-4">
-            {emergencies.map((e, i) => (
-              <li
-                key={i}
-                className="flex justify-between items-center bg-gray-50 p-4 rounded-xl shadow-sm hover:bg-teal-50 transition"
-              >
-                <span className="font-semibold text-gray-800">{e.name}</span>
-                <a
-                  href={`tel:${e.phone}`}
-                  className="text-teal-600 font-bold hover:underline"
-                >
-                  {e.phone}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <div className="px-5 py-5 sm:px-6">
+            {emergencies.length ? (
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {emergencies.map((e, i) => (
+                  <li
+                    key={i}
+                    className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 transition hover:border-teal-200 hover:bg-teal-50/70"
+                  >
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Contact</p>
+                    <div className="mt-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-bold text-slate-900">{e.name}</p>
+                        <a href={`tel:${e.phone}`} className="mt-1 inline-flex text-sm font-semibold text-teal-700 hover:underline">
+                          {e.phone}
+                        </a>
+                      </div>
+                      <a
+                        href={`tel:${e.phone}`}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-teal-600 text-white transition hover:bg-teal-700"
+                        aria-label={`Call ${e.name}`}
+                      >
+                        <span className="text-sm font-bold">↗</span>
+                      </a>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                No emergency contacts are available for this destination yet.
+              </div>
+            )}
+          </div>
         </section>
 
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-[#2ad2c9] via-[#38bdf8] to-[#5eead4] opacity-40" />
-
-        {/* Local Phrases */}
-        <section className="bg-white p-8 rounded-3xl shadow-md border-l-8 border-blue-400 animate-fade-in-up">
-          <div className="flex items-center justify-between gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-blue-700">
-              Local Phrases
-            </h2>
+        <section id="local-phrases" className="overflow-hidden rounded-3xl border border-sky-100 bg-white/90 shadow-[0_16px_50px_rgba(14,165,233,0.08)] animate-fade-in-up">
+          <div className="flex items-center justify-between gap-3 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white px-5 py-4 sm:px-6 sm:py-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Speakable phrases</p>
+              <h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">Local Phrases</h2>
+            </div>
             <button
               onClick={() => downloadSection("phrases")}
               title="Download local phrases"
               aria-label="Download local phrases"
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 transition hover:bg-blue-200"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-600 text-white transition hover:bg-sky-700"
             >
               <FaDownload className="text-sm" />
             </button>
           </div>
-          <ul className="space-y-4">
-            {phrases.map((p, i) => (
-              <li
-                key={i}
-                className="bg-gray-50 p-4 rounded-xl shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-medium text-gray-800">{p.original}</div>
-                    {p.translation && (
-                      <div className="text-gray-500 italic ml-2">
-                        - {p.translation}
+          <div className="px-5 py-5 sm:px-6">
+            {phrases.length ? (
+              <ul className="space-y-3">
+                {phrases.map((p, i) => (
+                  <li key={i} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-base font-semibold text-slate-900">{p.original}</div>
+                        {p.translation && <div className="mt-1 text-sm italic text-slate-500">{p.translation}</div>}
                       </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => speakPhrase(p, `${country}-${i}`)}
-                    title={speakingKey === `${country}-${i}` ? "Stop pronunciation" : "Hear pronunciation"}
-                    aria-label={speakingKey === `${country}-${i}` ? "Stop pronunciation" : "Hear pronunciation"}
-                    className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-700 transition hover:bg-blue-200"
-                  >
-                    {speakingKey === `${country}-${i}` ? <FaStop className="text-sm" /> : <FaVolumeUp className="text-sm" />}
-                  </button>
-                </div>
-                {p.context_note && (
-                  <div className="text-xs text-gray-500 mt-2">
-                    Context: {p.context_note}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+                      <button
+                        onClick={() => speakPhrase(p, `${country}-${i}`)}
+                        title={speakingKey === `${country}-${i}` ? "Stop pronunciation" : "Hear pronunciation"}
+                        aria-label={speakingKey === `${country}-${i}` ? "Stop pronunciation" : "Hear pronunciation"}
+                        className={`shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full transition ${speakingKey === `${country}-${i}` ? "bg-slate-900 text-white" : "bg-sky-600 text-white hover:bg-sky-700"}`}
+                      >
+                        {speakingKey === `${country}-${i}` ? <FaStop className="text-sm" /> : <FaVolumeUp className="text-sm" />}
+                      </button>
+                    </div>
+                    {p.context_note && <div className="mt-3 text-xs text-slate-500">Context: {p.context_note}</div>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                No local phrases are available for this destination yet.
+              </div>
+            )}
+          </div>
         </section>
 
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-[#facc15] via-[#fde68a] to-[#fef9c3] opacity-40" />
-
-        {/* Useful Tips */}
-        <section className="bg-yellow-50 p-8 rounded-3xl shadow-md border-l-8 border-yellow-400 animate-fade-in-up">
-          <div className="flex items-center justify-between gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-yellow-800">
-              Useful Tips
-            </h2>
+        <section id="useful-tips" className="overflow-hidden rounded-3xl border border-amber-100 bg-white/90 shadow-[0_16px_50px_rgba(245,158,11,0.08)] animate-fade-in-up">
+          <div className="flex items-center justify-between gap-3 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-white px-5 py-4 sm:px-6 sm:py-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Practical guidance</p>
+              <h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">Useful Tips</h2>
+            </div>
             <button
               onClick={() => downloadSection("tips")}
               title="Download useful tips"
               aria-label="Download useful tips"
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-200 text-yellow-800 transition hover:bg-yellow-300"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-white transition hover:bg-amber-600"
             >
               <FaDownload className="text-sm" />
             </button>
           </div>
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl bg-white border border-yellow-200 p-3">
-              <p className="font-semibold text-yellow-800">Transit basics</p>
-              <p className="text-gray-700 mt-1">{utility.transit}</p>
+          <div className="px-5 py-5 sm:px-6">
+            <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 text-sm">
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="font-semibold text-amber-800">Transit basics</p>
+                <p className="mt-1 text-slate-700">{utility.transit}</p>
+              </div>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="font-semibold text-amber-800">Payment tips</p>
+                <p className="mt-1 text-slate-700">{utility.payments}</p>
+              </div>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="font-semibold text-amber-800">Connectivity reality</p>
+                <p className="mt-1 text-slate-700">{utility.connectivity}</p>
+              </div>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="font-semibold text-amber-800">Safety notes</p>
+                <p className="mt-1 text-slate-700">{utility.safety}</p>
+              </div>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="font-semibold text-amber-800">Common scams to avoid</p>
+                <p className="mt-1 text-slate-700">{utility.scams}</p>
+              </div>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="font-semibold text-amber-800">Emergency workflow</p>
+                <p className="mt-1 text-slate-700">{utility.emergency}</p>
+              </div>
             </div>
-            <div className="rounded-xl bg-white border border-yellow-200 p-3">
-              <p className="font-semibold text-yellow-800">Payment tips</p>
-              <p className="text-gray-700 mt-1">{utility.payments}</p>
-            </div>
-            <div className="rounded-xl bg-white border border-yellow-200 p-3">
-              <p className="font-semibold text-yellow-800">Connectivity reality</p>
-              <p className="text-gray-700 mt-1">{utility.connectivity}</p>
-            </div>
-            <div className="rounded-xl bg-white border border-yellow-200 p-3">
-              <p className="font-semibold text-yellow-800">Safety notes</p>
-              <p className="text-gray-700 mt-1">{utility.safety}</p>
-            </div>
-            <div className="rounded-xl bg-white border border-yellow-200 p-3">
-              <p className="font-semibold text-yellow-800">Common scams to avoid</p>
-              <p className="text-gray-700 mt-1">{utility.scams}</p>
-            </div>
-            <div className="rounded-xl bg-white border border-yellow-200 p-3">
-              <p className="font-semibold text-yellow-800">Emergency workflow</p>
-              <p className="text-gray-700 mt-1">{utility.emergency}</p>
-            </div>
+            {tips.length ? (
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {tips.map((t, i) => (
+                  <li key={i} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-slate-800">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">{i + 1}</span>
+                      <span>{t.tip}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                No additional travel tips are available for this destination yet.
+              </div>
+            )}
           </div>
-          <ul className="list-disc list-inside space-y-2 text-gray-800">
-            {tips.map((t, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="mt-1 text-yellow-600">•</span>
-                {t.tip}
-              </li>
-            ))}
-          </ul>
         </section>
       </div>
       <ScrollNavButtons />
