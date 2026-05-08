@@ -103,9 +103,11 @@ const PopularDestinations = () => {
                 <p className="text-xs mb-2">
                   {destination.description}
                 </p>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-teal-100/90">
-                  {destination.visitCount ? `${destination.visitCount.toLocaleString()} visits` : 'Trending now'}
-                </p>
+                {destination.visitCount ? (
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-teal-100/90">
+                    {destination.visitCount.toLocaleString()} visits
+                  </p>
+                ) : null}
               </div>
             </button>
           ))}

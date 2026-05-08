@@ -579,7 +579,7 @@ export default function EssentialsPage() {
               href={`/country/${country?.toUpperCase()}/services`}
               className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
             >
-              Compare services
+              Services
             </Link>
           </div>
         </div>
