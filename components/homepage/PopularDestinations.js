@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLoader } from '@/components/LoaderContext';
 import { fetchPopularCountries } from '@/src/utils/api';
+import { SkeletonCard } from '@/components/Skeletons';
 
 const fallbackDestinations = [
   { code: 'TH', name: 'Thailand', image: '/Images/Thailand.jpg', description: 'Discover Thailand\'s vibrant culture, street food, and stunning temples with the best travel apps for your trip.' },
@@ -83,34 +84,40 @@ const PopularDestinations = () => {
           </span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {(loading ? fallbackDestinations : destinations).map((destination, index) => (
-            <button
-              key={`${destination.code}-${index}`}
-              className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
-              onClick={() => handleExploreClick(destination.code)}
-              aria-label={`Explore ${destination.name} apps`}
-            >
-              <div className="absolute inset-0">
-                <img
-                  src={destination.image}
-                  alt={destination.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
-              </div>
-              <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
-                <h3 className="text-xl font-semibold mb-1">{destination.code} {destination.name}</h3>
-                <p className="text-xs mb-2">
-                  {destination.description}
-                </p>
-                {destination.visitCount ? (
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-teal-100/90">
-                    {destination.visitCount.toLocaleString()} visits
+          {loading ? (
+            [...Array(6)].map((_, index) => (
+              <SkeletonCard key={`skeleton-${index}`} className="h-44" />
+            ))
+          ) : (
+            destinations.map((destination, index) => (
+              <button
+                key={`${destination.code}-${index}`}
+                className="relative rounded-3xl shadow-md overflow-hidden h-44 transition-all hover:scale-105 hover:shadow-lg border border-gray-200 bg-white text-left active:scale-95 cursor-pointer"
+                onClick={() => handleExploreClick(destination.code)}
+                aria-label={`Explore ${destination.name} apps`}
+              >
+                <div className="absolute inset-0">
+                  <img
+                    src={destination.image}
+                    alt={destination.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent"></div>
+                </div>
+                <div className="relative z-10 p-4 flex flex-col justify-end h-full text-white">
+                  <h3 className="text-xl font-semibold mb-1">{destination.code} {destination.name}</h3>
+                  <p className="text-xs mb-2">
+                    {destination.description}
                   </p>
-                ) : null}
-              </div>
-            </button>
-          ))}
+                  {destination.visitCount ? (
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-teal-100/90">
+                      {destination.visitCount.toLocaleString()} visits
+                    </p>
+                  ) : null}
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </div>
     </section>

@@ -8,6 +8,7 @@ import { fetchEssentials, fetchCountryInfo } from "@/src/utils/api";
 import { useLoader } from "@/components/LoaderContext";
 import ScrollNavButtons from "@/components/ScrollNavButtons";
 import { FaDownload, FaStop, FaVolumeUp } from "react-icons/fa";
+import { SkeletonHero, SkeletonSection } from "@/components/Skeletons";
 
 export default function EssentialsPage() {
   const { country } = useParams();
@@ -524,29 +525,43 @@ export default function EssentialsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(45,212,191,0.14),_transparent_24%),linear-gradient(180deg,#f8fcff_0%,#eefbff_100%)]">
-        <div className="w-full bg-gradient-to-r from-[#0f172a] via-[#0ea5e9] to-[#14b8a6] py-14 text-white shadow-[0_20px_60px_rgba(15,118,110,0.28)]">
-          <div className="mx-auto flex max-w-3xl flex-col items-center px-4 text-center">
-            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-3xl border border-white/30 bg-white/15 shadow-lg">
-              <span className="h-10 w-10 animate-spin rounded-full border-4 border-white/35 border-t-white" aria-hidden="true" />
+      <div className="w-full min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(45,212,191,0.12),_transparent_24%),linear-gradient(180deg,#f8fcff_0%,#eefbff_100%)]">
+        {/* Hero Skeleton */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f172a] via-[#155e75] to-[#0f766e] opacity-95" />
+          <div className="relative mx-auto max-w-6xl px-4 py-12 sm:py-14 lg:px-6">
+            <div className="space-y-6">
+              <div className="h-4 w-40 rounded-full bg-slate-300 animate-pulse" />
+              <div className="h-12 w-2/3 rounded-xl bg-slate-300 animate-pulse" />
+              <div className="space-y-3">
+                <div className="h-4 w-full rounded-lg bg-slate-300 animate-pulse" />
+                <div className="h-4 w-4/5 rounded-lg bg-slate-300 animate-pulse" />
+              </div>
+              <div className="h-10 w-32 rounded-full bg-slate-300 animate-pulse mt-4" />
             </div>
-            <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/85">
-              Offline travel essentials
-            </span>
-            <h1 className="mt-4 text-3xl font-extrabold md:text-5xl">Loading Essentials</h1>
-            <p className="mt-3 max-w-2xl text-sm text-white/90 sm:text-base md:text-lg">
-              Fetching emergency contacts, useful phrases, and country assistance for {countryName || country?.toUpperCase()}.
-            </p>
           </div>
         </div>
 
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <div className="grid animate-pulse gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
-            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
-            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
-            <div className="h-36 rounded-3xl border border-white/70 bg-white/90 shadow-md" />
+        {/* Content Skeleton */}
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10 lg:py-12 space-y-8 sm:space-y-10">
+          {/* Assistance Section Skeleton */}
+          <SkeletonSection />
+          {/* Emergency Section Skeleton */}
+          <SkeletonSection />
+          {/* Phrases Section Skeleton */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm animate-pulse">
+            <div className="h-6 bg-slate-100 rounded-xl w-32 mb-4" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="p-3 border border-slate-100 rounded-lg">
+                  <div className="h-4 bg-slate-100 rounded-lg w-full mb-2" />
+                  <div className="h-3 bg-slate-50 rounded-lg w-3/4" />
+                </div>
+              ))}
+            </div>
           </div>
+          {/* Tips Section Skeleton */}
+          <SkeletonSection />
         </div>
       </div>
     );

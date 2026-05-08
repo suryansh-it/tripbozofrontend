@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa";
 import ScrollNavButtons from "@/components/ScrollNavButtons";
 import { fetchCountryInfo } from "@/src/utils/api";
+import { SkeletonSection, SkeletonCompareTable } from "@/components/Skeletons";
 
 const SERVICE_DATA = {
   esim: {
@@ -77,6 +78,7 @@ export default function CountryServicesPage() {
   const { country } = useParams();
   const countryCode = String(country || "").toUpperCase();
   const [countryInfo, setCountryInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState("esim");
   const [selectedProviders, setSelectedProviders] = useState([]);
 
@@ -86,6 +88,7 @@ export default function CountryServicesPage() {
     let mounted = true;
 
     const loadCountry = async () => {
+      setLoading(true);
       try {
         const info = await fetchCountryInfo(countryCode);
         if (!mounted) return;
@@ -93,6 +96,9 @@ export default function CountryServicesPage() {
       } catch {
         if (!mounted) return;
         setCountryInfo(null);
+      } finally {
+        if (!mounted) return;
+        setLoading(false);
       }
     };
 
@@ -123,6 +129,42 @@ export default function CountryServicesPage() {
     setSelectedSection(nextSection);
     setSelectedProviders([]);
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.12),_transparent_25%),linear-gradient(180deg,#f7fbff_0%,#ecf7ff_100%)] px-4 py-10 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          {/* Header Skeleton */}
+          <div className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-md sm:p-8 animate-pulse">
+            <div className="space-y-4">
+              <div className="h-4 w-40 rounded-lg bg-slate-100" />
+              <div className="h-8 w-64 rounded-lg bg-slate-100" />
+              <div className="space-y-2">
+                <div className="h-4 w-full rounded-lg bg-slate-100" />
+                <div className="h-4 w-4/5 rounded-lg bg-slate-100" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section Tabs Skeleton */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="rounded-2xl bg-white/90 border border-slate-200 p-4 h-32 animate-pulse" />
+            ))}
+          </div>
+
+          {/* Content Skeleton */}
+          <div className="mt-6 grid gap-6 lg:grid-cols-[1.35fr,1fr]">
+            <SkeletonSection />
+            <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-md animate-pulse">
+              <div className="h-6 bg-slate-100 rounded-lg w-40 mb-4" />
+              <SkeletonCompareTable />
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.16),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.12),_transparent_25%),linear-gradient(180deg,#f7fbff_0%,#ecf7ff_100%)] px-4 py-10 sm:px-6 lg:px-10">
