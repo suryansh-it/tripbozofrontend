@@ -248,21 +248,6 @@ export default function EssentialsPage() {
       )
   );
 
-// Sample fallbacks
-const sampleInsurance = [
-  { name: "World Nomads", link: "https://www.worldnomads.com" },
-  { name: "Allianz Travel", link: "https://www.allianztravelinsurance.com" },
-  { name: "InsureMyTrip", link: "https://www.insuremytrip.com" },
-  { name: "VisitorsCoverage", link: "https://www.visitorscoverage.com" },
-];
-const sampleEsim = [
-  { name: "Airalo", link: "https://www.airalo.com" },
-  { name: "GigSky", link: "https://www.gigsky.com" },
-  { name: "Nomad", link: "https://www.getnomad.app" },
-  { name: "eSIMDB", link: "https://esimdb.com" },
-  { name: "Roamless", link: "https://roamless.com" },
-];
-
   const getSpeechLang = (countryCode) => {
     const map = {
       // All 30 countries with proper language codes for TTS
@@ -455,15 +440,6 @@ const sampleEsim = [
       return downloadTextFile(`${base}-useful-tips.txt`, lines.join("\n"));
     }
 
-    if (sectionName === "insurance") {
-      const lines = sampleInsurance.map((s) => `${s.name}: ${s.link}`);
-      return downloadTextFile(`${base}-insurance-assistance.txt`, lines.join("\n"));
-    }
-
-    if (sectionName === "esim") {
-      const lines = sampleEsim.map((s) => `${s.name}: ${s.link}`);
-      return downloadTextFile(`${base}-esim-connectivity.txt`, lines.join("\n"));
-    }
   };
 
   const stopAnySpeech = () => {
@@ -595,92 +571,18 @@ const sampleEsim = [
         </div>
       </div>
 
-     
-      {/* ── New Services Section ── */}
-      <div className="max-w-4xl mx-auto px-4 mt-8 grid gap-6 animate-fade-in-up
-                      grid-cols-1 md:grid-cols-2">
-        {/* Insurance Services */}
-        <div className="bg-white p-6 rounded-3xl shadow-md border-l-8 border-red-400">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <h3 className="text-xl font-semibold text-red-600">
-              Insurance & Assistance
-            </h3>
-            <button
-              onClick={() => downloadSection("insurance")}
-              title="Download insurance list"
-              aria-label="Download insurance list"
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-200"
-            >
-              <FaDownload className="text-sm" />
-            </button>
+      <div className="max-w-4xl mx-auto px-4 mt-8 animate-fade-in-up">
+        <div className="rounded-3xl border border-cyan-200 bg-white/90 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700">Need eSIM, insurance or booking comparisons?</p>
+            <p className="mt-1 text-sm text-slate-700">Use the dedicated compare page for providers, pricing snapshots, and feature side-by-side view.</p>
           </div>
-          <p className="text-gray-700 text-sm mb-4">
-            Trusted travel insurance providers and 24/7 assistance services.
-          </p>
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-           {sampleInsurance.map((svc) => (
-             <button
-               key={svc.name}
-               href={svc.link}
-               target="_blank"
-               rel="noopener noreferrer"
-               className="
-                 inline-flex items-center justify-center
-                 px-3 py-1.5
-                 bg-red-300
-                 border border-red-300
-                 rounded-lg
-                 text-gray-700 text-sm font-bold
-                 hover:bg-red-400
-                 transition
-               "
-             >
-               {svc.name}
-             </button>
-           ))}
-          </div>
-        </div>
-
-        {/* eSIM Services */}
-        <div className="bg-white p-6 rounded-3xl shadow-md border-l-8 border-green-400">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <h3 className="text-xl font-semibold text-green-600">
-              eSIM & Connectivity
-            </h3>
-            <button
-              onClick={() => downloadSection("esim")}
-              title="Download eSIM list"
-              aria-label="Download eSIM list"
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-700 transition hover:bg-green-200"
-            >
-              <FaDownload className="text-sm" />
-            </button>
-          </div>
-          <p className="text-gray-700 text-sm mb-4">
-            Browse eSIM plans and local data options to stay connected abroad.
-          </p>
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-            {sampleEsim.map((svc) => (
-              <button
-                key={svc.name}
-                href={svc.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="
-                  inline-flex items-center justify-center
-                  px-3 py-1.5
-                  bg-green-300
-                  border border-green-300
-                  rounded-lg
-                  text-gray-600 text-sm font-bold
-                  hover:bg-green-400
-                  transition
-                "
-              >
-                {svc.name}
-              </button>
-            ))}
-          </div>
+          <Link
+            href={`/country/${country?.toUpperCase()}/services`}
+            className="inline-flex items-center justify-center rounded-full bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700 transition"
+          >
+            Open Services Compare
+          </Link>
         </div>
       </div>
 

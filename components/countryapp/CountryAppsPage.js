@@ -21,6 +21,7 @@ import {
   FaGooglePlay,
   FaRegBookmark,
   FaBookmark,
+  FaExchangeAlt,
 } from "react-icons/fa";
 import {
   initSession,
@@ -137,6 +138,12 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
   const handleEssentialsClick = () => {
     setShow(true); // Show loader before navigation
     router.push(`/country/${countryCode}/Essentials`);
+    // Loader will be hidden by LoaderRouteListener
+  };
+
+  const handleServicesClick = () => {
+    setShow(true); // Show loader before navigation
+    router.push(`/country/${countryCode}/services`);
     // Loader will be hidden by LoaderRouteListener
   };
 
@@ -1516,7 +1523,7 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
        )}
 
           {/* Buttons group at bottom */}
-        <div className="flex flex-col gap-3 mt-6 max-[639px]:grid max-[639px]:grid-cols-3 max-[639px]:gap-2 max-[639px]:mt-4">
+        <div className="flex flex-col gap-3 mt-6 max-[639px]:grid max-[639px]:grid-cols-4 max-[639px]:gap-2 max-[639px]:mt-4">
           <button
             onClick={handleGenerateQR}
             disabled={!selectedApps.length}
@@ -1537,6 +1544,14 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
           >
             <FaGlobe className="text-lg max-[639px]:text-base" />
             <span>Essentials</span>
+          </button>
+
+          <button
+            onClick={handleServicesClick}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-violet-300 hover:bg-violet-400 text-violet-900 text-sm font-semibold shadow-lg transition max-[639px]:flex-col max-[639px]:gap-1 max-[639px]:px-2 max-[639px]:py-2 max-[639px]:text-[11px]"
+          >
+            <FaExchangeAlt className="text-lg max-[639px]:text-base" />
+            <span>Services</span>
           </button>
 
           <button
