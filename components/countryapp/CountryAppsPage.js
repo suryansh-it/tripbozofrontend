@@ -316,23 +316,45 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
   const toggleCountryBookmark = async () => {
     const countryId = countryInfo?.id;
     if (!countryId) return;
-    const isBookmarked = !!bookmarkMap.country?.[countryId];
-    if (isBookmarked) {
-      const bmId = bookmarkMap.country[countryId];
-      const ok = await removeBookmark(bmId);
-      if (ok) {
+
+    const authToken = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    if (!authToken) {
+      // show login-needed message instead of redirect
+      if (typeof window !== "undefined") {
+        alert("Please sign in to bookmark countries and apps.");
+      }
+      return;
+    }
+
+    const prevId = bookmarkMap.country?.[countryId];
+    const isBookmarked = !!prevId;
+
+    // Optimistic UI: toggle immediately
+    setBookmarkMap((prev) => ({ ...prev, country: { ...prev.country, [countryId]: isBookmarked ? undefined : "pending" } }));
+
+    try {
+      if (isBookmarked) {
+        // remove
+        const ok = await removeBookmark(prevId);
+        if (!ok) throw new Error("remove-failed");
         setBookmarkMap((prev) => ({ ...prev, country: { ...prev.country, [countryId]: undefined } }));
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId } }));
         }
-      }
-    } else {
-      const res = await addBookmark("country", countryId, null);
-      if (res && res.id) {
+      } else {
+        // add
+        const res = await addBookmark("country", countryId, null);
+        if (!res || !res.id) throw new Error("add-failed");
         setBookmarkMap((prev) => ({ ...prev, country: { ...prev.country, [countryId]: res.id } }));
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId } }));
         }
+      }
+    } catch (err) {
+      // revert to previous state
+      setBookmarkMap((prev) => ({ ...prev, country: { ...prev.country, [countryId]: prevId } }));
+      if (typeof window !== "undefined") {
+        alert("Could not update bookmark. Please try again.");
       }
     }
   };

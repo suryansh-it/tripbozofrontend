@@ -170,7 +170,38 @@ export default function ProfileRightPanel() {
                     <p className="text-xs text-slate-500">{country.code}</p>
                   </div>
                 </div>
-                <FiBookmark size={16} className="text-amber-600 ml-2 flex-shrink-0" />
+                <div className="flex items-center gap-2 ml-2">
+                  <button
+                    type="button"
+                    title="Remove bookmark"
+                    className="inline-flex items-center justify-center rounded-full p-2 hover:bg-amber-100"
+                    onClick={async () => {
+                      // Try to find the bookmark id from user's bookmarks and remove it
+                      try {
+                        const bms = await fetchUserBookmarks("country");
+                        const match = Array.isArray(bms) ? bms.find((b) => Number(b.country) === Number(country.id)) : null;
+                        if (match && match.id) {
+                          const ok = await removeBookmark(match.id);
+                          if (ok) {
+                            // Refresh stats
+                            const refreshed = await fetchProfileStats();
+                            setStats(refreshed);
+                            if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("bookmarks-updated", { detail: { type: "country", countryId: country.id } }));
+                          } else {
+                            alert("Could not remove bookmark. Try again.");
+                          }
+                        } else {
+                          alert("Bookmark not found.");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        alert("Error removing bookmark.");
+                      }
+                    }}
+                  >
+                    <FiBookmark size={16} className="text-amber-600" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
