@@ -72,6 +72,7 @@ const Footer = () => {
               <li><AppLink className="text-gray-300 hover:text-white transition-colors text-sm" href="/Onboarding">Onboarding</AppLink></li>
               <li><AppLink className="text-gray-300 hover:text-white transition-colors text-sm" href="/About">About Us</AppLink></li>
               <li><AppLink className="text-gray-300 hover:text-white transition-colors text-sm" href="/contact">Contact Us</AppLink></li>
+              <li><AppLink className="text-gray-300 hover:text-white transition-colors text-sm" href="/admin">Admin Console</AppLink></li>
             </ul>
             <div className="w-[70%] h-px bg-white/30 mt-4 md:hidden"></div>
           </div>

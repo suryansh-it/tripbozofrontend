@@ -857,16 +857,15 @@ export default function CountryAppsPage({ countryCode, apps, countryInfo, travel
              <button
                type="button"
                onClick={(e) => { e.stopPropagation(); toggleCountryBookmark(); }}
-               className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm font-semibold transition-all duration-200 active:scale-95 shadow-sm ${
+               className={`inline-flex items-center justify-center h-10 w-10 rounded-full border transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm ${
                  bookmarkMap.country?.[countryInfo?.id]
-                   ? "border-black bg-black text-white shadow-black/20"
-                   : "border-slate-200 bg-white text-slate-800 hover:border-black hover:bg-slate-50 hover:text-black"
+                   ? "border-black bg-black text-white shadow-black/20 hover:border-slate-800 hover:bg-slate-900"
+                   : "border-slate-200 bg-white text-slate-700 hover:border-black hover:bg-slate-50 hover:text-black"
                }`}
                title={bookmarkMap.country?.[countryInfo?.id] ? 'Remove bookmark' : 'Bookmark country'}
                aria-label={bookmarkMap.country?.[countryInfo?.id] ? 'Remove bookmark' : 'Bookmark country'}
              >
-               {bookmarkMap.country?.[countryInfo?.id] ? <FaBookmark className="text-white" /> : <FaRegBookmark className="text-slate-600" />}
-               <span className="hidden sm:inline">{bookmarkMap.country?.[countryInfo?.id] ? 'Bookmarked' : 'Bookmark'}</span>
+               {bookmarkMap.country?.[countryInfo?.id] ? <FaBookmark className="text-lg" /> : <FaRegBookmark className="text-lg" />}
              </button>
            </div>
          </div>

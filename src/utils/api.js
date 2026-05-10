@@ -342,6 +342,32 @@ export async function fetchCountryInfo(countryCode) {
   }
 }
 
+export async function fetchCountryServices(countryCode) {
+  if (!countryCode) return null;
+
+  if (isBrowser) {
+    try {
+      const proxyRes = await fetch(`/api/proxy/country/${countryCode}/services/`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (proxyRes.ok) {
+        return await proxyRes.json();
+      }
+    } catch {
+      // Fall through to direct API attempt.
+    }
+  }
+
+  try {
+    const res = await apiClient.get(`/country/${countryCode}/services/`);
+    return res.data;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchPopularCountries(limit = 6) {
   const normalizedLimit = Number.isFinite(Number(limit)) ? Math.max(1, Math.min(6, Number(limit))) : 6;
 
@@ -721,5 +747,62 @@ export async function removeBookmark(bookmarkId) {
   } catch (err) {
     console.warn("Failed to remove bookmark:", err);
     return false;
+  }
+}
+
+export async function fetchAdminSummary() {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return null;
+
+  try {
+    const res = await apiClient.get(`/admin/summary/`, { headers });
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchAdminOptions() {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return null;
+
+  try {
+    const res = await apiClient.get(`/admin/options/`, { headers });
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function submitAdminRecord(resource, data = {}) {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return null;
+
+  try {
+    const res = await apiClient.post(`/admin/ingest/`, { resource, data }, { headers });
+    return res?.data || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function submitAdminCsv(resource, file) {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization || !file) return null;
+
+  const formData = new FormData();
+  formData.append("resource", resource);
+  formData.append("file", file);
+
+  try {
+    const res = await apiClient.post(`/admin/ingest/`, formData, {
+      headers: {
+        ...headers,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res?.data || null;
+  } catch {
+    return null;
   }
 }

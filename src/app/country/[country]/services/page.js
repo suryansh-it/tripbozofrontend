@@ -14,7 +14,7 @@ import {
   FaExternalLinkAlt,
 } from "react-icons/fa";
 import ScrollNavButtons from "@/components/ScrollNavButtons";
-import { fetchCountryInfo } from "@/src/utils/api";
+import { fetchCountryInfo, fetchCountryServices } from "@/src/utils/api";
 import { SkeletonSection, SkeletonCompareTable } from "@/components/Skeletons";
 
 const SERVICE_DATA = {
@@ -78,11 +78,21 @@ export default function CountryServicesPage() {
   const { country } = useParams();
   const countryCode = String(country || "").toUpperCase();
   const [countryInfo, setCountryInfo] = useState(null);
+  const [serviceSections, setServiceSections] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState("esim");
   const [selectedProviders, setSelectedProviders] = useState([]);
 
-  const section = SERVICE_DATA[selectedSection];
+  const section = useMemo(() => {
+    const fallbackSection = SERVICE_DATA[selectedSection];
+    const remoteSection = serviceSections?.[selectedSection];
+    const providers = remoteSection?.providers?.length ? remoteSection.providers : fallbackSection.providers;
+    return {
+      ...fallbackSection,
+      ...(remoteSection || {}),
+      providers,
+    };
+  }, [selectedSection, serviceSections]);
 
   useEffect(() => {
     let mounted = true;
@@ -90,12 +100,23 @@ export default function CountryServicesPage() {
     const loadCountry = async () => {
       setLoading(true);
       try {
-        const info = await fetchCountryInfo(countryCode);
+        const [info, services] = await Promise.all([
+          fetchCountryInfo(countryCode),
+          fetchCountryServices(countryCode),
+        ]);
         if (!mounted) return;
         setCountryInfo(info || null);
+        const sections = Array.isArray(services?.sections)
+          ? services.sections.reduce((acc, item) => {
+              if (item?.key) acc[item.key] = item;
+              return acc;
+            }, {})
+          : null;
+        setServiceSections(sections);
       } catch {
         if (!mounted) return;
         setCountryInfo(null);
+        setServiceSections(null);
       } finally {
         if (!mounted) return;
         setLoading(false);
